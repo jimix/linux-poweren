@@ -389,6 +389,11 @@ int init_new_context(struct task_struct *t, struct mm_struct *mm)
 	 */
 	atomic_inc(&mm->mm_count);
 
+#ifdef CONFIG_PPC_MM_SLICES
+	if (slice_mm_new_context(mm))
+		slice_set_user_psize(mm, mmu_virtual_psize);
+#endif
+
 	return 0;
 }
 

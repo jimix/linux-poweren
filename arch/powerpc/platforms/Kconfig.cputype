@@ -23,6 +23,7 @@ choice
 config PPC_BOOK3S_32
 	bool "512x/52xx/6xx/7xx/74xx/82xx/83xx/86xx"
 	select PPC_FPU
+	select SYS_SUPPORTS_HUGETLBFS
 
 config PPC_85xx
 	bool "Freescale 85xx"
@@ -173,6 +174,7 @@ config BOOKE
 config FSL_BOOKE
 	bool
 	depends on (E200 || E500) && PPC32
+	select SYS_SUPPORTS_HUGETLBFS if PHYS_64BIT
 	default y
 
 # this is for common code between PPC32 & PPC64 FSL BOOKE
@@ -326,7 +328,7 @@ config PPC_CONTEXT_PROTECTION
 
 config PPC_MM_SLICES
 	bool
-	default y if HUGETLB_PAGE || (PPC_STD_MMU_64 && PPC_64K_PAGES)
+	default y if (PPC64 && HUGETLB_PAGE) || (PPC_STD_MMU_64 && PPC_64K_PAGES)
 	default n
 
 config VIRT_CPU_ACCOUNTING
