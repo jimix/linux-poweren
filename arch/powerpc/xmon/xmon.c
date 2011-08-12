@@ -2720,40 +2720,6 @@ static void dump_tlb_book3e(void)
 	u64 ramask;
 	int i, tlb, ntlbs, pidsz, lpidsz, rasz, lrat = 0;
 	int mmu_version;
-	static const char *pgsz_names[] = {
-		"  1K",
-		"  2K",
-		"  4K",
-		"  8K",
-		" 16K",
-		" 32K",
-		" 64K",
-		"128K",
-		"256K",
-		"512K",
-		"  1M",
-		"  2M",
-		"  4M",
-		"  8M",
-		" 16M",
-		" 32M",
-		" 64M",
-		"128M",
-		"256M",
-		"512M",
-		"  1G",
-		"  2G",
-		"  4G",
-		"  8G",
-		" 16G",
-		" 32G",
-		" 64G",
-		"128G",
-		"256G",
-		"512G",
-		"  1T",
-		"  2T",
-	};
 
 	/* Gather some infos about the MMU */
 	mmucfg = mfspr(SPRN_MMUCFG);
@@ -2828,7 +2794,7 @@ static void dump_tlb_book3e(void)
 			printf(" %016llx %04x %s %c%c AS%c",
 			       mas2 & ~0x3ffull,
 			       (mas1 >> 16) & 0x3fff,
-			       pgsz_names[(mas1 >> 7) & 0x1f],
+			       book3e_page_size_name((mas1 >> 7) & 0x1f),
 			       mas1 & MAS1_IND ? 'I' : ' ',
 			       mas1 & MAS1_IPROT ? 'P' : ' ',
 			       mas1 & MAS1_TS ? '1' : '0');
@@ -2842,8 +2808,8 @@ static void dump_tlb_book3e(void)
 			       mas2 & MAS2_E  ? 'e' : ' ');
 			printf(" %016llx", mas7_mas3 & ramask & ~0x7ffull);
 			if (mas1 & MAS1_IND)
-				printf(" %s\n",
-				       pgsz_names[(mas7_mas3 >> 1) & 0x1f]);
+				printf(" %s\n", book3e_page_size_name(
+					(mas7_mas3 >> 1) & 0x1f));
 			else
 				printf(" U%c%c%c S%c%c%c\n",
 				       mas7_mas3 & MAS3_UX ? 'x' : ' ',

@@ -253,6 +253,8 @@ extern int mmu_vmemmap_psize;
 extern unsigned long linear_map_top;
 #endif
 
+extern const char *book3e_page_size_name(unsigned psize);
+
 #endif /* !__ASSEMBLY__ */
 
 #endif /* _ASM_POWERPC_MMU_BOOK3E_H_ */

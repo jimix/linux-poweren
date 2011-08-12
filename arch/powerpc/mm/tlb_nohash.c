@@ -619,3 +619,20 @@ void __init early_init_mmu(void)
 #endif
 }
 #endif /* CONFIG_PPC64 */
+
+#ifdef CONFIG_PPC_BOOK3E
+const char *book3e_page_size_name(unsigned psize)
+{
+	static const char *names[] = { "1K", "2K", "4K", "8K", "16K",
+		"32K", "64K", "128K", "256K", "512K", "1M", "2M", "4M",
+		"8M", "16M", "32M", "64M", "128M", "256M", "512M", "1G",
+		"2G", "4G", "8G", "16G", "32G", "64G", "128G", "256G",
+		"512G", "1T", "2T"
+	};
+
+	if (psize > ARRAY_SIZE(names))
+		return "Unknown";
+
+	return names[psize];
+}
+#endif /* CONFIG_PPC_BOOK3E */
