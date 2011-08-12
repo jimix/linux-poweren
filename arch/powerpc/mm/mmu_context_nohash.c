@@ -63,6 +63,72 @@ static DEFINE_RAW_SPINLOCK(context_lock);
 	(sizeof(unsigned long) * (last_context / BITS_PER_LONG + 1))
 
 
+#ifdef CONFIG_PPC_CONTEXT_PROTECTION
+static unsigned int protected_ctx;
+static unsigned int max_protected_ctx;
+
+#ifdef CONFIG_BOOK3E_MMU_DEBUG
+static unsigned int fake_protected_ctx;
+#endif
+
+int mm_context_protect(struct mm_struct *mm)
+{
+	unsigned long flags;
+	int rc = 0;
+
+	raw_spin_lock_irqsave(&context_lock, flags);
+
+	if (mm->context.protect_count == 0) {
+		if (protected_ctx < max_protected_ctx)
+			protected_ctx++;
+		else {
+			rc = -EBUSY;
+			goto out;
+		}
+	}
+
+	BUG_ON(mm->context.protect_count == ((1 << 16) - 1));
+	mm->context.protect_count++;
+out:
+	raw_spin_unlock_irqrestore(&context_lock, flags);
+
+	return rc;
+}
+EXPORT_SYMBOL_GPL(mm_context_protect);
+
+void mm_context_unprotect(struct mm_struct *mm)
+{
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&context_lock, flags);
+
+	BUG_ON(mm->context.protect_count == 0);
+	mm->context.protect_count--;
+
+	if (mm->context.protect_count == 0) {
+		protected_ctx--;
+		BUG_ON(protected_ctx > max_protected_ctx);
+	}
+
+	raw_spin_unlock_irqrestore(&context_lock, flags);
+}
+EXPORT_SYMBOL_GPL(mm_context_unprotect);
+
+static inline int mm_protect_count(struct mm_struct *mm)
+{
+	return mm->context.protect_count;
+}
+
+static inline void set_mm_protect_count(struct mm_struct *mm, u16 val)
+{
+	mm->context.protect_count = val;
+}
+#else
+static inline int mm_protect_count(struct mm_struct *mm) { return 0; }
+static inline void set_mm_protect_count(struct mm_struct *mm, u16 val) { }
+#endif /* CONFIG_CONTEXT_PROTECTION */
+
+
 /* Steal a context from a task that has one at the moment.
  *
  * This is used when we are running out of available PID numbers
@@ -91,10 +157,14 @@ static unsigned int steal_context_smp(unsigned int id)
 		/* Pick up the victim mm */
 		mm = context_mm[id];
 
-		/* We have a candidate victim, check if it's active, on SMP
-		 * we cannot steal active contexts
+		if (!mm)
+			return id;
+
+		/* We have a candidate victim, check if it's active. We can
+		 * never steal a context that is protected, or using copros.
+		 * On SMP we cannot steal active contexts.
 		 */
-		if (mm->context.active) {
+		if (mm->context.active || mm_protect_count(mm)) {
 			id++;
 			if (id > last_context)
 				id = first_context;
@@ -141,8 +211,18 @@ static unsigned int steal_context_up(unsigned int id)
 	struct mm_struct *mm;
 	int cpu = smp_processor_id();
 
+retry:
 	/* Pick up the victim mm */
 	mm = context_mm[id];
+	if (!mm)
+		goto found;
+
+	if (mm_protect_count(mm)) {
+		id++;
+		if (id > last_context)
+			id = first_context;
+		goto retry;
+	}
 
 	pr_hardcont(" | steal %d from 0x%p", id, mm);
 
@@ -152,6 +232,7 @@ static unsigned int steal_context_up(unsigned int id)
 	/* Mark this mm has having no context anymore */
 	mm->context.id = MMU_NO_CONTEXT;
 
+found:
 	/* XXX This clear should ultimately be part of local_flush_tlb_mm */
 	__clear_bit(id, stale_map[cpu]);
 
@@ -291,6 +372,7 @@ int init_new_context(struct task_struct *t, struct mm_struct *mm)
 
 	mm->context.id = MMU_NO_CONTEXT;
 	mm->context.active = 0;
+	set_mm_protect_count(mm, 0);
 
 	return 0;
 }
@@ -307,6 +389,7 @@ void destroy_context(struct mm_struct *mm)
 		return;
 
 	WARN_ON(mm->context.active != 0);
+	WARN_ON(mm_protect_count(mm) != 0);
 
 	raw_spin_lock_irqsave(&context_lock, flags);
 	id = mm->context.id;
@@ -454,5 +537,24 @@ void __init mmu_context_init(void)
 	context_map[0] = (1 << first_context) - 1;
 	next_context = first_context;
 	nr_free_contexts = last_context - first_context + 1;
-}
 
+#ifdef CONFIG_PPC_CONTEXT_PROTECTION
+	/*
+	 * Processes using copros, or that otherwise have their PID known by
+	 * some external entity can't have their PID stolen, they need to
+	 * protect their PID. But make sure we don't allow too many processes
+	 * to protect their PIDs. We want to always have one non-copro PID
+	 * per thread in the system.
+	 */
+	if (num_possible_cpus() < nr_free_contexts)
+		max_protected_ctx = nr_free_contexts - num_possible_cpus();
+	else {
+		/* We're screwed, block PID protection but keep booting */
+		max_protected_ctx = 0;
+		WARN_ON(1);
+	}
+
+	printk(KERN_DEBUG "mmu: up to %d MMU PIDs may be protected\n",
+		max_protected_ctx);
+#endif
+}

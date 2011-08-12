@@ -313,6 +313,17 @@ config PPC_BOOK3E_MMU
 	def_bool y
 	depends on FSL_BOOKE || PPC_BOOK3E
 
+config PPC_CONTEXT_PROTECTION
+	bool 'Allow protection from context stealing'
+	depends on PPC_MMU_NOHASH && PPC_BOOK3E_MMU
+	default n
+	---help---
+	  On Book3e processors, this will keep contexts (and PIDs)
+	  from being stolen.  This is useful if you are giving PIDs
+	  out to other devices, like IOMMUs.
+
+	  If you don't know what to do here, say N.
+
 config PPC_MM_SLICES
 	bool
 	default y if HUGETLB_PAGE || (PPC_STD_MMU_64 && PPC_64K_PAGES)

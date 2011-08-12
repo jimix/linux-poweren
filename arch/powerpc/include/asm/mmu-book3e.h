@@ -223,6 +223,7 @@ typedef struct {
 	unsigned int	id;
 	unsigned int	active;
 	unsigned long	vdso_base;
+	u16             protect_count; /* protect context against stealing */
 #ifdef CONFIG_PPC_ICSWX
 	struct spinlock *cop_lockp;	/* guard cop related stuff */
 	unsigned long acop;		/* mask of enabled coprocessor types */
