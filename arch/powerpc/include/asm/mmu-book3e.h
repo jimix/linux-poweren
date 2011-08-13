@@ -41,24 +41,31 @@
 /* MAS registers bit definitions */
 
 #define MAS0_TLBSEL(x)		(((x) << 28) & 0x30000000)
-#define MAS0_ESEL(x)		(((x) << 16) & 0x0FFF0000)
+#define MAS0_ESEL_MASK		0x0FFF0000
+#define MAS0_ESEL_SHIFT		16
+#define MAS0_ESEL(x)		(((x) << MAS0_ESEL_SHIFT) & MAS0_ESEL_MASK)
+#define MAS0_ESEL_GET(m)	(((m)  & MAS0_ESEL_MASK) >> MAS0_ESEL_SHIFT)
 #define MAS0_NV(x)		((x) & 0x00000FFF)
 #define MAS0_ESEL_MASK		0x0FFF0000
 #define MAS0_HES		0x00004000
 #define MAS0_WQ_ALLWAYS		0x00000000
 #define MAS0_WQ_COND		0x00001000
-#define MAS0_WQ_CLR_RSRV       	0x00002000
+#define MAS0_WQ_CLR_RSRV	0x00002000
 
 #define MAS1_VALID		0x80000000
 #define MAS1_IPROT		0x40000000
-#define MAS1_TID(x)		(((x) << 16) & 0x3FFF0000)
+#define MAS1_TID_MASK		0x3FFF0000
+#define MAS1_TID_SHIFT		16
+#define MAS1_TID(x)		(((x) << MAS1_TID_SHIFT) & MAS1_TID_MASK)
+#define MAS1_TID_GET(m1)	(((m1) & MAS1_TID_MASK) >> MAS1_TID_SHIFT)
 #define MAS1_IND		0x00002000
 #define MAS1_TS			0x00001000
 #define MAS1_TSIZE_MASK		0x00000f80
 #define MAS1_TSIZE_SHIFT	7
 #define MAS1_TSIZE(x)		(((x) << MAS1_TSIZE_SHIFT) & MAS1_TSIZE_MASK)
+#define MAS1_TSIZE_GET(m)	(((m) & MAS1_TSIZE_MASK) >> MAS1_TSIZE_SHIFT)
 
-#define MAS2_EPN		0xFFFFF000
+#define MAS2_EPN		(~0xFFFUL)
 #define MAS2_X0			0x00000040
 #define MAS2_X1			0x00000020
 #define MAS2_W			0x00000010
@@ -66,10 +73,12 @@
 #define MAS2_M			0x00000004
 #define MAS2_G			0x00000002
 #define MAS2_E			0x00000001
-#define MAS2_EPN_MASK(size)		(~0 << (size + 10))
-#define MAS2_VAL(addr, size, flags)	((addr) & MAS2_EPN_MASK(size) | (flags))
+#define MAS2_EPN_MASK(size)		(~0UL << ((size) + 10))
+#define MAS2_VAL(addr, size, flags)	\
+	(((addr) & MAS2_EPN_MASK(size)) | (flags))
 
 #define MAS3_RPN		0xFFFFF000
+#define MAS3_RA52		0x00000800
 #define MAS3_U0			0x00000200
 #define MAS3_U1			0x00000100
 #define MAS3_U2			0x00000080
@@ -80,10 +89,12 @@
 #define MAS3_SW			0x00000004
 #define MAS3_UR			0x00000002
 #define MAS3_SR			0x00000001
-#define MAS3_SPSIZE		0x0000003e
+#define MAS3_SPSIZE_MASK	0x0000003e
 #define MAS3_SPSIZE_SHIFT	1
+#define MAS3_SPSIZE(x)		(((x) << MAS3_SPSIZE_SHIFT) & MAS3_SPSIZE_MASK)
+#define MAS3_SPSIZE_GET(m)	(((m) & MAS3_SPSIZE_MASK) >> MAS3_SPSIZE_SHIFT)
 
-#define MAS4_TLBSELD(x) 	MAS0_TLBSEL(x)
+#define MAS4_TLBSELD(x)		MAS0_TLBSEL(x)
 #define MAS4_INDD		0x00008000	/* Default IND */
 #define MAS4_TSIZED(x)		MAS1_TSIZE(x)
 #define MAS4_X0D		0x00000040
@@ -106,7 +117,7 @@
 #define MAS6_ISIZE(x)		MAS1_TSIZE(x)
 #define MAS6_SAS		0x00000001
 #define MAS6_SPID		MAS6_SPID0
-#define MAS6_SIND 		0x00000002	/* Indirect page */
+#define MAS6_SIND		0x00000002	/* Indirect page */
 #define MAS6_SIND_SHIFT		1
 #define MAS6_SPID_MASK		0x3fff0000
 #define MAS6_SPID_SHIFT		16
@@ -175,10 +186,10 @@
 #define TLBnPS_128K		0x00000080
 #define TLBnPS_256K		0x00000100
 #define TLBnPS_512K		0x00000200
-#define TLBnPS_1M 		0x00000400
-#define TLBnPS_2M 		0x00000800
-#define TLBnPS_4M 		0x00001000
-#define TLBnPS_8M 		0x00002000
+#define TLBnPS_1M		0x00000400
+#define TLBnPS_2M		0x00000800
+#define TLBnPS_4M		0x00001000
+#define TLBnPS_8M		0x00002000
 #define TLBnPS_16M		0x00004000
 #define TLBnPS_32M		0x00008000
 #define TLBnPS_64M		0x00010000
@@ -228,7 +239,7 @@ struct mmu_psize_def
 {
 	unsigned int	shift;	/* number of bits */
 	unsigned int	enc;	/* PTE encoding */
-	unsigned int    ind;    /* Corresponding indirect page size shift */
+	unsigned int	ind;	/* Corresponding indirect page size shift */
 	unsigned int	flags;
 #define MMU_PAGE_SIZE_DIRECT	0x1	/* Supported as a direct size */
 #define MMU_PAGE_SIZE_INDIRECT	0x2	/* Supported as an indirect size */
