@@ -70,6 +70,9 @@
 #define PPC_INST_ERATIVAX		0x7c000666
 #define PPC_INST_ERATSX			0x7c000126
 #define PPC_INST_ERATSX_DOT		0x7c000127
+#define PPC_INST_ICSWX			0x7c00032c
+#define PPC_INST_ICSWX_DOT		0x7c00032d
+
 
 /* Misc instructions for BPF compiler */
 #define PPC_INST_LD			0xe8000000
@@ -183,7 +186,9 @@
 					__PPC_RS(t) | __PPC_RA(a) | __PPC_RB(b))
 #define PPC_ERATSX_DOT(t, a, w)	stringify_in_c(.long PPC_INST_ERATSX_DOT | \
 					__PPC_RS(t) | __PPC_RA(a) | __PPC_RB(b))
-
+/* We always use icswx. for now */
+#define PPC_ICSWX_DOT(RS, RB)	stringify_in_c(.long PPC_INST_ICSWX_DOT | \
+					       __PPC_RS(RS) | __PPC_RB(RB))
 
 /*
  * Define what the VSX XX1 form instructions will look like, then add
