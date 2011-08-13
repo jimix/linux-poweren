@@ -391,12 +391,6 @@ static unsigned long slice_find_area(struct mm_struct *mm, unsigned long len,
 	(dst).high_slices &= ~(src).high_slices;	\
 } while (0)
 
-#ifdef CONFIG_PPC_64K_PAGES
-#define MMU_PAGE_BASE	MMU_PAGE_64K
-#else
-#define MMU_PAGE_BASE	MMU_PAGE_4K
-#endif
-
 unsigned long slice_get_unmapped_area(unsigned long addr, unsigned long len,
 				      unsigned long flags, unsigned int psize,
 				      int topdown, int use_cache)

@@ -183,6 +183,11 @@ extern u64 ppc64_rma_size;
 #define MMU_PAGE_64G	11
 #define MMU_PAGE_COUNT	12
 
+#ifdef CONFIG_PPC_64K_PAGES
+#define MMU_PAGE_BASE	MMU_PAGE_64K
+#else
+#define MMU_PAGE_BASE	MMU_PAGE_4K
+#endif
 
 #if defined(CONFIG_PPC_STD_MMU_64)
 /* 64-bit classic hash table MMU */
