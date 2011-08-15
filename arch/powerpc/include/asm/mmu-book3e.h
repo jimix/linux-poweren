@@ -262,6 +262,7 @@ extern int mmu_vmemmap_psize;
 
 #ifdef CONFIG_PPC64
 extern unsigned long linear_map_top;
+extern int book3e_htw_enabled;
 #endif
 
 extern const char *book3e_page_size_name(unsigned psize);
