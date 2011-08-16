@@ -18,3 +18,12 @@ config PPC_WSP_USE_256M_64K_FOR_BOLTED
 	depends on PPC_WSP_COPRO
 	bool "Use 256M/64K mapping for the kernel linear mapping"
 	default n
+
+menu "WSP/PowerEN Coprocessor Unit Selection"
+	depends on PPC_WSP_COPRO
+
+config PPC_WSP_UNIT_CDMX
+	bool "Crypto Data Mover Accelerator Unit"
+	default y
+
+endmenu
