@@ -437,6 +437,29 @@ void arch_exit_mmap(struct mm_struct *mm)
 	raw_spin_unlock_irqrestore(&context_lock, flags);
 }
 
+struct mm_struct *mm_lookup_by_id(unsigned int id)
+{
+	struct mm_struct *mm;
+	unsigned long flags;
+
+	if (id > last_context)
+		return NULL;
+
+	raw_spin_lock_irqsave(&context_lock, flags);
+
+	mm = context_mm[id];
+
+	/* Try to get a reference on mm_users, but not if it's already
+	 * zero. That could be the case if we're already tearing down
+	 * the mm - see mmput(). */
+	if (!mm || !atomic_inc_not_zero(&mm->mm_users))
+		mm = NULL;
+
+	raw_spin_unlock_irqrestore(&context_lock, flags);
+
+	return mm;
+}
+
 #ifdef CONFIG_SMP
 
 static int __cpuinit mmu_context_cpu_notify(struct notifier_block *self,
