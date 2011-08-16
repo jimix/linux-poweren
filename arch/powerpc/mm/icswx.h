@@ -61,6 +61,17 @@ extern void free_cop_pid(int free_pid);
 extern int acop_handle_fault(struct pt_regs *regs, unsigned long address,
 			     unsigned long error_code);
 
+static inline u64 acop_copro_type_bit(unsigned int type)
+{
+	return 1ULL << (63 - type);
+}
+
+static inline int mm_used_copro_type(struct mm_struct *mm, unsigned int type)
+{
+	/* Safe atm w/out locking because we never remove bits from acop */
+	return mm->context.acop & acop_copro_type_bit(type);
+}
+
 #ifdef CONFIG_PPC_ICSWX
 static inline int mm_used_copro(struct mm_struct *mm)
 {
