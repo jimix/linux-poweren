@@ -228,6 +228,9 @@ typedef struct {
 	struct spinlock *cop_lockp;	/* guard cop related stuff */
 	unsigned long acop;		/* mask of enabled coprocessor types */
 #endif /* CONFIG_PPC_ICSWX */
+#ifdef CONFIG_PPC_WSP_COPRO
+	ulong		pbics_used;	/* bitmap of which PBICs are used */
+#endif /* CONFIG_PPC_WSP_COPRO */
 } mm_context_t;
 
 /* Page size definitions, common between 32 and 64-bit

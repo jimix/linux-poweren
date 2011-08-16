@@ -86,4 +86,14 @@ static inline void copro_mm_context_destroy(struct mm_struct *mm) { }
 
 #endif /*CONFIG_PPC_ICSWX */
 
+#ifdef CONFIG_PPC_WSP_COPRO
+static inline int mm_used_copro_mmu(struct mm_struct *mm)
+{
+	mb();
+	return mm->context.pbics_used != 0;
+}
+#else  /* CONFIG_PPC_WSP_COPRO */
+static inline int mm_used_copro_mmu(struct mm_struct *mm) { return 0; }
+#endif	/* CONFIG_PPC_WSP_COPRO */
+
 #endif /* !_ARCH_POWERPC_MM_ICSWX_H_ */
