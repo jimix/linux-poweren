@@ -6,9 +6,8 @@
 #include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
-#include <asm/mmu.h>	
+#include <asm/mmu.h>
 #include <asm/cputable.h>
-#include <asm-generic/mm_hooks.h>
 #include <asm/cputhreads.h>
 
 /*
@@ -31,6 +30,15 @@ extern void mm_context_unprotect(struct mm_struct *mm);
 static inline int mm_context_protect(struct mm_struct *mm) { return 0; }
 extern inline void mm_context_unprotect(struct mm_struct *mm) { }
 #endif /* CONFIG_PPC_CONTEXT_PROTECTION */
+
+#ifdef CONFIG_PPC_MMU_NOHASH
+static inline void arch_dup_mmap(struct mm_struct *oldmm,
+				 struct mm_struct *mm) { }
+
+extern void arch_exit_mmap(struct mm_struct *mm);
+#else
+#include <asm-generic/mm_hooks.h>
+#endif /* CONFIG_PPC_MMU_NOHASH */
 
 #ifdef CONFIG_PPC_BOOK3S_64
 extern int __init_new_context(void);

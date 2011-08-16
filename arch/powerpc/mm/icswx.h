@@ -62,6 +62,11 @@ extern int acop_handle_fault(struct pt_regs *regs, unsigned long address,
 			     unsigned long error_code);
 
 #ifdef CONFIG_PPC_ICSWX
+static inline int mm_used_copro(struct mm_struct *mm)
+{
+	return mm->context.acop != 0;
+}
+
 static inline int copro_mm_context_init(struct mm_struct *mm)
 {
 	mm->context.cop_lockp = kmalloc(sizeof(spinlock_t), GFP_KERNEL);
@@ -81,6 +86,7 @@ static inline void copro_mm_context_destroy(struct mm_struct *mm)
 
 #else  /* CONFIG_PPC_ICSWX */
 
+static inline int mm_used_copro(struct mm_struct *mm) { return 0; }
 static inline int copro_mm_context_init(struct mm_struct *mm) { return 0; }
 static inline void copro_mm_context_destroy(struct mm_struct *mm) { }
 

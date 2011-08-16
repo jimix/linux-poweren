@@ -382,6 +382,12 @@ int init_new_context(struct task_struct *t, struct mm_struct *mm)
 	if (rc)
 		return rc;
 
+	/*
+	 * Grab a reference to the mm on behalf of the pointer we may store
+	 * in context_mm[]. We drop the reference in arch_exit_mmap().
+	 */
+	atomic_inc(&mm->mm_count);
+
 	return 0;
 }
 
@@ -412,6 +418,22 @@ void destroy_context(struct mm_struct *mm)
 		context_mm[id] = NULL;
 		nr_free_contexts++;
 	}
+	raw_spin_unlock_irqrestore(&context_lock, flags);
+}
+
+void arch_exit_mmap(struct mm_struct *mm)
+{
+	unsigned long flags;
+	unsigned int id;
+
+	raw_spin_lock_irqsave(&context_lock, flags);
+
+	id = mm->context.id;
+
+	/* Drop our reference on the mm. */
+	if (id != MMU_NO_CONTEXT)
+		atomic_dec(&mm->mm_count);
+
 	raw_spin_unlock_irqrestore(&context_lock, flags);
 }
 
