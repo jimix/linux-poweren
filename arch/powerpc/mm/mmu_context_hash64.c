@@ -24,6 +24,8 @@
 
 #include <asm/mmu_context.h>
 
+#include "icswx.h"
+
 static DEFINE_SPINLOCK(mmu_context_lock);
 static DEFINE_IDA(mmu_context_ida);
 
@@ -79,16 +81,13 @@ int init_new_context(struct task_struct *tsk, struct mm_struct *mm)
 		slice_set_user_psize(mm, mmu_virtual_psize);
 	subpage_prot_init_new_context(mm);
 	mm->context.id = index;
-#ifdef CONFIG_PPC_ICSWX
-	mm->context.cop_lockp = kmalloc(sizeof(spinlock_t), GFP_KERNEL);
-	if (!mm->context.cop_lockp) {
+
+	if (copro_mm_context_init(mm)) {
 		__destroy_context(index);
 		subpage_prot_free(mm);
 		mm->context.id = MMU_NO_CONTEXT;
 		return -ENOMEM;
 	}
-	spin_lock_init(mm->context.cop_lockp);
-#endif /* CONFIG_PPC_ICSWX */
 
 	return 0;
 }
@@ -103,11 +102,7 @@ EXPORT_SYMBOL_GPL(__destroy_context);
 
 void destroy_context(struct mm_struct *mm)
 {
-#ifdef CONFIG_PPC_ICSWX
-	drop_cop(mm->context.acop, mm);
-	kfree(mm->context.cop_lockp);
-	mm->context.cop_lockp = NULL;
-#endif /* CONFIG_PPC_ICSWX */
+	copro_mm_context_destroy(mm);
 	__destroy_context(mm->context.id);
 	subpage_prot_free(mm);
 	mm->context.id = MMU_NO_CONTEXT;

@@ -52,6 +52,8 @@
 #include <asm/mmu_context.h>
 #include <asm/tlbflush.h>
 
+#include "icswx.h"
+
 static unsigned int first_context, last_context;
 static unsigned int next_context, nr_free_contexts;
 static unsigned long *context_map;
@@ -368,11 +370,17 @@ void switch_mmu_context(struct mm_struct *prev, struct mm_struct *next)
  */
 int init_new_context(struct task_struct *t, struct mm_struct *mm)
 {
+	int rc;
+
 	pr_hard("initing context for mm @%p\n", mm);
 
 	mm->context.id = MMU_NO_CONTEXT;
 	mm->context.active = 0;
 	set_mm_protect_count(mm, 0);
+
+	rc = copro_mm_context_init(mm);
+	if (rc)
+		return rc;
 
 	return 0;
 }
@@ -384,6 +392,8 @@ void destroy_context(struct mm_struct *mm)
 {
 	unsigned long flags;
 	unsigned int id;
+
+	copro_mm_context_destroy(mm);
 
 	if (mm->context.id == MMU_NO_CONTEXT)
 		return;

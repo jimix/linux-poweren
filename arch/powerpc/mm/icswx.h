@@ -1,3 +1,6 @@
+#ifndef _ARCH_POWERPC_MM_ICSWX_H_
+#define _ARCH_POWERPC_MM_ICSWX_H_
+
 /*
  *  ICSWX and ACOP Management
  *
@@ -10,6 +13,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <asm/mmu_context.h>
 
 /* also used to denote that PIDs are not used */
@@ -56,3 +60,30 @@ extern void free_cop_pid(int free_pid);
 
 extern int acop_handle_fault(struct pt_regs *regs, unsigned long address,
 			     unsigned long error_code);
+
+#ifdef CONFIG_PPC_ICSWX
+static inline int copro_mm_context_init(struct mm_struct *mm)
+{
+	mm->context.cop_lockp = kmalloc(sizeof(spinlock_t), GFP_KERNEL);
+	if (!mm->context.cop_lockp)
+		return -ENOMEM;
+
+	spin_lock_init(mm->context.cop_lockp);
+	return 0;
+}
+
+static inline void copro_mm_context_destroy(struct mm_struct *mm)
+{
+	drop_cop(mm->context.acop, mm);
+	kfree(mm->context.cop_lockp);
+	mm->context.cop_lockp = NULL;
+}
+
+#else  /* CONFIG_PPC_ICSWX */
+
+static inline int copro_mm_context_init(struct mm_struct *mm) { return 0; }
+static inline void copro_mm_context_destroy(struct mm_struct *mm) { }
+
+#endif /*CONFIG_PPC_ICSWX */
+
+#endif /* !_ARCH_POWERPC_MM_ICSWX_H_ */
