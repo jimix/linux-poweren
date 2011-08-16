@@ -162,6 +162,14 @@ EXPORT_SYMBOL(local_flush_tlb_page);
 
 static DEFINE_RAW_SPINLOCK(tlbivax_lock);
 
+void nohash_tlbsync(void)
+{
+	raw_spin_lock(&tlbivax_lock);
+	asm volatile("tlbsync; sync;" : : : "memory");
+	raw_spin_unlock(&tlbivax_lock);
+}
+EXPORT_SYMBOL(nohash_tlbsync);
+
 static int mm_is_core_local(struct mm_struct *mm)
 {
 	return cpumask_subset(mm_cpumask(mm),

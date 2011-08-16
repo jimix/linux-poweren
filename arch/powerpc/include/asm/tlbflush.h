@@ -45,6 +45,7 @@ extern void __local_flush_tlb_page(struct mm_struct *mm, unsigned long vmaddr,
 				   int tsize, int ind);
 
 #ifdef CONFIG_SMP
+extern void nohash_tlbsync(void);
 extern void flush_tlb_mm(struct mm_struct *mm);
 extern void flush_tlb_page(struct vm_area_struct *vma, unsigned long vmaddr);
 extern void __flush_tlb_page(struct mm_struct *mm, unsigned long vmaddr,
