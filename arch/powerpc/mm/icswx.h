@@ -109,8 +109,26 @@ static inline int mm_used_copro_mmu(struct mm_struct *mm)
 	mb();
 	return mm->context.pbics_used != 0;
 }
+
+extern void copro_mmu_flush_entry(struct mm_struct *mm, unsigned long addr,
+				  unsigned int pid, unsigned int tsize,
+				  unsigned int ind);
+extern void copro_exit_mm_context(struct mm_struct *mm);
+extern void copro_mmu_flush_mm(struct mm_struct *mm, int full_flush);
+extern void copro_mmu_flush_bolted(struct mm_struct *mm, unsigned long addr);
+
 #else  /* CONFIG_PPC_WSP_COPRO */
+
 static inline int mm_used_copro_mmu(struct mm_struct *mm) { return 0; }
+static inline void copro_mmu_flush_entry(struct mm_struct *mm,
+					unsigned long addr,
+					unsigned int pid, unsigned int tsize,
+					unsigned int ind) { }
+static inline void copro_exit_mm_context(struct mm_struct *mm) { }
+static inline void copro_mmu_flush_mm(struct mm_struct *mm, int full_flush) { }
+static inline void copro_mmu_flush_bolted(struct mm_struct *mm,
+					  unsigned long addr) { }
+
 #endif	/* CONFIG_PPC_WSP_COPRO */
 
 #endif /* !_ARCH_POWERPC_MM_ICSWX_H_ */

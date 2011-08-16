@@ -1,0 +1,20 @@
+
+config PPC_WSP_COPRO_DEBUGFS
+	depends on PPC_WSP_COPRO && DEBUG_FS
+	bool "Expose WSP coprocessor information in debugfs"
+	default y
+
+config PPC_WSP_COPRO_DEBUG
+	depends on PPC_WSP_COPRO_DEBUGFS
+	bool "Enable extra debug logging for WSP coprocessors"
+	default n
+
+config PPC_WSP_COPRO_GCOV
+	depends on GCOV_KERNEL && PPC_WSP_COPRO
+	bool "Enable gcov profiling for WSP coprocessors and related code"
+	default n
+
+config PPC_WSP_USE_256M_64K_FOR_BOLTED
+	depends on PPC_WSP_COPRO
+	bool "Use 256M/64K mapping for the kernel linear mapping"
+	default n

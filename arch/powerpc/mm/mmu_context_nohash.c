@@ -166,7 +166,8 @@ static unsigned int steal_context_smp(unsigned int id)
 		 * never steal a context that is protected, or using copros.
 		 * On SMP we cannot steal active contexts.
 		 */
-		if (mm->context.active || mm_protect_count(mm)) {
+		if (mm->context.active || mm_protect_count(mm) ||
+			mm_used_copro(mm)) {
 			id++;
 			if (id > last_context)
 				id = first_context;
@@ -219,7 +220,7 @@ retry:
 	if (!mm)
 		goto found;
 
-	if (mm_protect_count(mm)) {
+	if (mm_protect_count(mm) || mm_used_copro(mm)) {
 		id++;
 		if (id > last_context)
 			id = first_context;
@@ -425,6 +426,12 @@ void arch_exit_mmap(struct mm_struct *mm)
 {
 	unsigned long flags;
 	unsigned int id;
+
+	if (mm_used_copro(mm) || mm_used_copro_mmu(mm))
+		copro_exit_mm_context(mm);
+
+	if (mm_used_copro(mm))
+		drop_cop(~0ul, mm);
 
 	raw_spin_lock_irqsave(&context_lock, flags);
 

@@ -42,6 +42,7 @@
 #include <asm/code-patching.h>
 
 #include "mmu_decl.h"
+#include "icswx.h"
 
 #ifdef CONFIG_PPC_BOOK3E
 struct mmu_psize_def mmu_psize_defs[MMU_PAGE_COUNT] = {
@@ -229,6 +230,10 @@ void flush_tlb_mm(struct mm_struct *mm)
 				       do_flush_tlb_mm_ipi, &p, 1);
 	}
 	_tlbil_pid(pid);
+
+	if (mm_used_copro_mmu(mm))
+		copro_mmu_flush_mm(mm, 0);
+
  no_context:
 	preempt_enable();
 }
@@ -265,6 +270,10 @@ void __flush_tlb_page(struct mm_struct *mm, unsigned long vmaddr,
 			/* Ignores smp_processor_id() even if set in cpu_mask */
 			smp_call_function_many(cpu_mask,
 					       do_flush_tlb_page_ipi, &p, 1);
+
+			if (mm_used_copro_mmu(mm))
+				copro_mmu_flush_entry(mm, vmaddr,
+						      pid, tsize, ind);
 		}
 	}
 	_tlbil_va(vmaddr, pid, tsize, ind);
@@ -346,6 +355,7 @@ void tlb_flush_pgtable(struct mmu_gather *tlb, unsigned long address)
 		unsigned long start = address & PMD_MASK;
 		unsigned long end = address + PMD_SIZE;
 		unsigned long size = 1UL << mmu_psize_defs[mmu_pte_psize].shift;
+		int copro_mmu = mm_used_copro_mmu(tlb->mm);
 
 		/* This isn't the most optimal, ideally we would factor out the
 		 * while preempt & CPU mask mucking around, or even the IPI but
@@ -353,6 +363,10 @@ void tlb_flush_pgtable(struct mmu_gather *tlb, unsigned long address)
 		 */
 		while (start < end) {
 			__flush_tlb_page(tlb->mm, start, tsize, 1);
+
+			if (copro_mmu)
+				copro_mmu_flush_bolted(tlb->mm, start);
+
 			start += size;
 		}
 	} else {
