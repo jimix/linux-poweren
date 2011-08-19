@@ -34,4 +34,8 @@ config PPC_WSP_UNIT_REGX
 	bool "Regular Expression Pattern Matching Accelerator Unit"
 	default y
 
+config PPC_WSP_UNIT_XMLX
+	bool "XML Accelerator Unit"
+	default y
+
 endmenu
