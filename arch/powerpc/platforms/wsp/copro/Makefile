@@ -18,6 +18,7 @@ obj-y					+= imq.o
 obj-y					+= topology.o
 obj-y					+= unit.o 	# must be first unit
 obj-$(CONFIG_PPC_WSP_UNIT_CDMX)		+= unit_cdmx.o
+obj-$(CONFIG_PPC_WSP_UNIT_CMPX)		+= unit_cmpx.o
 obj-y					+= unit_fini.o  # must be last unit
 
 obj-$(CONFIG_PPC_WSP_COPRO_DEBUGFS)	+= pbic_debug.o

@@ -26,4 +26,8 @@ config PPC_WSP_UNIT_CDMX
 	bool "Crypto Data Mover Accelerator Unit"
 	default y
 
+config PPC_WSP_UNIT_CMPX
+	bool "Compressionr/Decompression Accelerator Unit"
+	default y
+
 endmenu
