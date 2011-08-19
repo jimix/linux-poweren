@@ -422,6 +422,9 @@ void destroy_context(struct mm_struct *mm)
 	raw_spin_unlock_irqrestore(&context_lock, flags);
 }
 
+struct srcu_notifier_head mm_protect_cleanup_notifier;
+EXPORT_SYMBOL_GPL(mm_protect_cleanup_notifier);
+
 void arch_exit_mmap(struct mm_struct *mm)
 {
 	unsigned long flags;
@@ -429,6 +432,9 @@ void arch_exit_mmap(struct mm_struct *mm)
 
 	if (mm_used_copro(mm) || mm_used_copro_mmu(mm))
 		copro_exit_mm_context(mm);
+
+	if (mm_protect_count(mm))
+		srcu_notifier_call_chain(&mm_protect_cleanup_notifier, 0, mm);
 
 	if (mm_used_copro(mm))
 		drop_cop(~0ul, mm);
@@ -620,3 +626,11 @@ void __init mmu_context_init(void)
 		max_protected_ctx);
 #endif
 }
+
+static int __init exit_mmap_notifier_init(void)
+{
+	srcu_init_notifier_head(&mm_protect_cleanup_notifier);
+
+	return 0;
+}
+core_initcall(exit_mmap_notifier_init);

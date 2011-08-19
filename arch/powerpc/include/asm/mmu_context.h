@@ -22,6 +22,7 @@ extern void switch_slb(struct task_struct *tsk, struct mm_struct *mm);
 extern void set_context(unsigned long id, pgd_t *pgd);
 
 extern struct mm_struct *mm_lookup_by_id(unsigned int id);
+extern struct srcu_notifier_head mm_protect_cleanup_notifier;
 
 #ifdef CONFIG_PPC_CONTEXT_PROTECTION
 extern int mm_context_protect(struct mm_struct *mm);
