@@ -124,7 +124,16 @@ static inline int huge_ptep_set_access_flags(struct vm_area_struct *vma,
 					     unsigned long addr, pte_t *ptep,
 					     pte_t pte, int dirty)
 {
-	return ptep_set_access_flags(vma, addr, ptep, pte, dirty);
+	int rc;
+
+	rc = ptep_set_access_flags(vma, addr, ptep, pte, dirty);
+#ifdef CONFIG_PPC_BOOK3E_64
+	/* For now, we convince all callers that the PTE is dirty,
+	 * this has the effect of forcing an update of the TLB and is
+	 * an easy way to deal with the entry getting evicted */
+	rc = 1;
+#endif
+	return rc;
 }
 
 static inline pte_t huge_ptep_get(pte_t *ptep)

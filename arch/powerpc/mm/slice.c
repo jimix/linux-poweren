@@ -177,7 +177,9 @@ static void slice_flush_segments(void *parm)
 	get_paca()->context = current->active_mm->context;
 
 	local_irq_save(flags);
+#ifdef CONFIG_PPC_STD_MMU_64
 	slb_flush_and_rebolt();
+#endif
 	local_irq_restore(flags);
 }
 

@@ -75,6 +75,7 @@ config PPC_BOOK3E_64
 	bool "Embedded processors"
 	select PPC_FPU # Make it a choice ?
 	select PPC_SMP_MUXED_IPI
+	select SYS_SUPPORTS_HUGETLBFS
 
 endchoice
 

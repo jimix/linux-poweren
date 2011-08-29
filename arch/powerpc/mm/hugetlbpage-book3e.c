@@ -39,7 +39,7 @@ static inline int book3e_tlb_exists(unsigned long ea, unsigned long pid)
 
 void book3e_hugetlb_preload(struct mm_struct *mm, unsigned long ea, pte_t pte)
 {
-	unsigned long mas1, mas2;
+	unsigned long mas1, mas2, mas0;
 	u64 mas7_3;
 	unsigned long psize, tsize, shift;
 	unsigned long flags;
@@ -52,9 +52,9 @@ void book3e_hugetlb_preload(struct mm_struct *mm, unsigned long ea, pte_t pte)
 	if (unlikely(is_kernel_addr(ea)))
 		return;
 
-#ifdef CONFIG_MM_SLICES
-	psize = mmu_get_tsize(get_slice_psize(mm, ea));
-	tsize = mmu_get_psize(psize);
+#ifdef CONFIG_PPC_MM_SLICES
+	psize = get_slice_psize(mm, ea);
+	tsize = mmu_get_tsize(psize);
 	shift = mmu_psize_defs[psize].shift;
 #else
 	vma = find_vma(mm, ea);
@@ -80,13 +80,15 @@ void book3e_hugetlb_preload(struct mm_struct *mm, unsigned long ea, pte_t pte)
 
 	/* We have to use the CAM(TLB1) on FSL parts for hugepages */
 	index = __get_cpu_var(next_tlbcam_idx);
-	mtspr(SPRN_MAS0, MAS0_ESEL(index) | MAS0_TLBSEL(1));
+	mas0 = MAS0_ESEL(index) | MAS0_TLBSEL(1);
 
 	/* Just round-robin the entries and wrap when we hit the end */
 	if (unlikely(index == ncams - 1))
 		__get_cpu_var(next_tlbcam_idx) = tlbcam_index;
 	else
 		__get_cpu_var(next_tlbcam_idx)++;
+#else
+	mas0 = MAS0_HES;
 #endif
 	mas1 = MAS1_VALID | MAS1_TID(mm->context.id) | MAS1_TSIZE(tsize);
 	mas2 = ea & ~((1UL << shift) - 1);
@@ -96,12 +98,14 @@ void book3e_hugetlb_preload(struct mm_struct *mm, unsigned long ea, pte_t pte)
 	if (!pte_dirty(pte))
 		mas7_3 &= ~(MAS3_SW|MAS3_UW);
 
-	mtspr(SPRN_MAS1, mas1);
 	mtspr(SPRN_MAS2, mas2);
 
 	if (mmu_has_feature(MMU_FTR_USE_PAIRED_MAS)) {
+		mtspr(SPRN_MAS0_MAS1, (mas0 << 32) | mas1);
 		mtspr(SPRN_MAS7_MAS3, mas7_3);
 	} else {
+		mtspr(SPRN_MAS0, mas0);
+		mtspr(SPRN_MAS1, mas1);
 		mtspr(SPRN_MAS7, upper_32_bits(mas7_3));
 		mtspr(SPRN_MAS3, lower_32_bits(mas7_3));
 	}
