@@ -161,4 +161,17 @@ static inline void flush_hugetlb_page(struct vm_area_struct *vma,
 }
 #endif
 
+#ifdef CONFIG_PPC64
+static inline int shift_to_mmu_psize(unsigned int shift)
+{
+	int psize;
+
+	for (psize = 0; psize < MMU_PAGE_COUNT; ++psize)
+		if (mmu_psize_defs[psize].shift == shift)
+			return psize;
+	return -1;
+}
+#endif /* CONFIG_PPC64 */
+
+
 #endif /* _ASM_POWERPC_HUGETLB_H */
