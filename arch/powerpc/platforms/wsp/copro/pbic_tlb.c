@@ -712,7 +712,6 @@ static int insert_huge_mapping(struct pbic *pbic, hugepd_t *hugepd,
 	shift = hugepd_shift(*hugepd);
 	psize = shift_to_mmu_psize(shift);
 
-	pr_warn("shift %ld, psize %d\n", shift, psize);
 	BUG_ON(psize < 0);
 
 	/* If our page tables are laid out such that we can use

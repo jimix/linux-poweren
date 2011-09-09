@@ -43,6 +43,7 @@ config PPC_WSP_COPRO
 	bool "Support for WSP coprocessors"
 	select ANON_INODES
 	select PPC_CONTEXT_PROTECTION
+	select PPC_HUGETLB_WITH_HTW if HUGETLB_PAGE
 	default y
 
 source "arch/powerpc/platforms/wsp/copro/Kconfig"
