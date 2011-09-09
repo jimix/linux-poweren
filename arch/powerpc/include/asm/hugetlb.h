@@ -85,10 +85,20 @@ static inline void hugetlb_prefault_arch_hook(struct mm_struct *mm)
 {
 }
 
-
+extern pte_t pte_set_huge_size(struct mm_struct *mm, unsigned long addr,
+			       pte_t pte);
 static inline void set_huge_pte_at(struct mm_struct *mm, unsigned long addr,
 				   pte_t *ptep, pte_t pte)
 {
+#ifdef CONFIG_PPC_HUGETLB_WITH_HTW
+	/*
+	 * Currently the hugetlb entries are placed directly in to the
+	 * TLB and the PTEs themselves are not updated with the actual
+	 * size.  However, in order to support HTW we need the PTE to
+	 * be corrected, so we do this on the way to writing it
+	 */
+	pte = pte_set_huge_size(mm, addr, pte);
+#endif
 	set_pte_at(mm, addr, ptep, pte);
 }
 

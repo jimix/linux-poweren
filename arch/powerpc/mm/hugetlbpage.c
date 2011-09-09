@@ -20,6 +20,8 @@
 #include <asm/tlb.h>
 #include <asm/setup.h>
 
+#include <mm/icswx.h>
+
 #define PAGE_SHIFT_64K	16
 #define PAGE_SHIFT_16M	24
 #define PAGE_SHIFT_16G	34
@@ -157,17 +159,35 @@ pte_t *huge_pte_alloc(struct mm_struct *mm, unsigned long addr, unsigned long sz
 	pmd_t *pm;
 	hugepd_t *hpdp = NULL;
 	unsigned pshift = __ffs(sz);
+	unsigned minpdshift = pshift + 1;
 	unsigned pdshift = PGDIR_SHIFT;
 
 	addr &= ~(sz-1);
 
+#ifdef CONFIG_PPC_HUGETLB_WITH_HTW
+	/* In order to support indirect pages on Book3E, we force 16M
+	 * pages at sufficiently large addresses (basically high
+	 * slices) to go a level higher than they normally would, so
+	 * that we have a full indirect pagetable page (actually
+	 * several) contiguously allocated. */
+	if (book3e_htw_enabled) {
+		int mmu_psize = shift_to_mmu_psize(pshift);
+		unsigned ind = mmu_psize_defs[mmu_psize].ind;
+
+		if (ind && ((addr >> ind) > ((SLICE_LOW_TOP - 1) >> ind)))
+			minpdshift = ind;
+	}
+#endif /* CONFIG_PPC_HUGETLB_WITH_HTW */
+
+	BUG_ON(minpdshift > SLICE_HIGH_SHIFT);
+
 	pg = pgd_offset(mm, addr);
-	if (pshift >= PUD_SHIFT) {
+	if (minpdshift >= PUD_SHIFT) {
 		hpdp = (hugepd_t *)pg;
 	} else {
 		pdshift = PUD_SHIFT;
 		pu = pud_alloc(mm, pg, addr);
-		if (pshift >= PMD_SHIFT) {
+		if (minpdshift >= PMD_SHIFT) {
 			hpdp = (hugepd_t *)pu;
 		} else {
 			pdshift = PMD_SHIFT;
@@ -427,6 +447,20 @@ static void free_hugepd_range(struct mmu_gather *tlb, hugepd_t *hpdp, int pdshif
 		hpdp->pd = 0;
 
 	tlb->need_flush = 1;
+
+	if (mm_used_copro_mmu(tlb->mm)) {
+		unsigned long addr;
+		int psize = shift_to_mmu_psize(shift);
+		unsigned long ind = mmu_psize_defs[psize].ind;
+
+		if (ind) {
+			for (addr = start; addr < (start + (1UL << pdshift));
+			     addr += (1UL << ind)) {
+				copro_mmu_flush_bolted(tlb->mm, addr);
+			}
+		}
+	}
+
 #ifdef CONFIG_PPC64
 	pgtable_free_tlb(tlb, hugepte, pdshift - shift);
 #else
@@ -843,6 +877,28 @@ static int __init hugetlbpage_init(void)
 		if (!PGT_CACHE(pdshift - shift))
 			panic("hugetlbpage_init(): could not create "
 			      "pgtable cache for %d bit pagesize\n", shift);
+#ifdef CONFIG_PPC_HUGETLB_WITH_HTW
+		/* add a cache specifically for finding our indirect entry */
+		if (book3e_htw_enabled) {
+			unsigned ind = mmu_psize_defs[psize].ind;
+
+			if (ind) {
+				if (ind < PMD_SHIFT)
+					pdshift = PMD_SHIFT;
+				else if (ind < PUD_SHIFT)
+					pdshift = PUD_SHIFT;
+				else
+					pdshift = PGDIR_SHIFT;
+
+				pgtable_cache_add(pdshift - shift, NULL);
+				if (!PGT_CACHE(pdshift - shift))
+					panic("hugetlbpage_init(): could not "
+					      "create indirect %d pgtable "
+					      "cache for %d bit pagesize\n",
+					      pdshift, shift);
+			}
+		}
+#endif /* CONFIG_PPC_HUGETLB_WITH_HTW */
 	}
 
 	/* Set default large page size. Currently, we pick 16M or 1M

@@ -32,7 +32,12 @@ struct vmemmap_backing {
  * contain this value.  This value is also used as a mask, so it must
  * be one less than a power of two.
  */
+#ifdef CONFIG_PPC_HUGETLB_WITH_HTW
+/* In order to support Book3e HTW with hugetlbs we need a larger size */
+#define MAX_PGTABLE_INDEX_SIZE	0x1f
+#else
 #define MAX_PGTABLE_INDEX_SIZE	0xf
+#endif
 
 extern struct kmem_cache *pgtable_cache[];
 #define PGT_CACHE(shift) (pgtable_cache[(shift)-1])
