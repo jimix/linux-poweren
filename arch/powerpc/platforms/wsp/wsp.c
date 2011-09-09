@@ -32,7 +32,9 @@ void __init wsp_setup_arch(void)
 #ifdef CONFIG_PCI
 	wsp_setup_pci();
 #endif
-
+#ifdef CONFIG_PPC_WSP_UNIT_XMLX
+	wsp_setup_xmlx();
+#endif
 }
 
 void __init wsp_setup_irq(void)

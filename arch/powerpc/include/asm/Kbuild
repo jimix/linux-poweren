@@ -16,6 +16,7 @@ header-y += linkage.h
 header-y += msgbuf.h
 header-y += nvram.h
 header-y += param.h
+header-y += pixad-xml.h
 header-y += poll.h
 header-y += posix_types.h
 header-y += poweren_hwtrace.h

@@ -4,8 +4,9 @@
 #include <asm/wsp.h>
 
 /* Devtree compatible strings for major devices */
-#define PCIE_COMPATIBLE     "ibm,wsp-pciex"
-#define NHTM_COMPATIBLE     "ibm,wsp-nhtm"
+#define PCIE_COMPATIBLE		"ibm,wsp-pciex"
+#define NHTM_COMPATIBLE		"ibm,wsp-nhtm"
+#define XML_UNIT_COMPATIBLE	"ibm,wsp-coprocessor-xmlx"
 
 extern void wsp_setup_arch(void);
 extern void wsp_setup_irq(void);
@@ -22,6 +23,10 @@ extern int smp_a2_cpu_bootable(unsigned int nr);
 extern int __devinit smp_a2_kick_cpu(int nr);
 
 extern void opb_pic_init(void);
+
+extern void __init wsp_setup_xmlx(void);
+extern u64 __initdata wsp_xmlx_early_allocs[];
+extern ulong __initdata xmlx_early_size;
 
 /* chroma specific managment */
 extern void wsp_h8_restart(char *cmd);

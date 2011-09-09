@@ -16,76 +16,72 @@
 
 #include <asm/scom.h>
 
+#include "../wsp.h"
 #include "cop.h"
 #include "unit.h"
 
-#define XML_UNIT_COMPATIBLE     "ibm,wsp-coprocessor-xmlx"
 
 struct xml_mem {
-	struct device_node *dn;
 	u64 addr;
-	int inited;
+	ulong size;
+	struct device_node *dn;
 	struct copro_unit *unit;
+	int inited;
 };
 
 static struct xml_mem *xml_mem;
 static int num_xmlx;
 
-void __init wsp_xml_memory_alloc(void)
+static int __init wsp_xml_memory_alloc(void)
 {
 	struct device_node *dn;
 	int i, size;
 	u64 pa;
+
+	if (xmlx_early_size == 0)
+		return -ENODEV;
 
 	num_xmlx = 0;
 	for_each_compatible_node(dn, NULL, XML_UNIT_COMPATIBLE)
 		num_xmlx++;
 
 	if (num_xmlx == 0) {
-		cop_debug("no xmlx found\n");
-		return;
+		pr_info("%s: no xmlx found\n", __func__);
+		return -ENODEV;
 	}
 
 	size = num_xmlx * sizeof(struct xml_mem);
-	pa = memblock_alloc_base(size, sizeof(struct xml_mem), 0x40000000u);
-	xml_mem = (struct xml_mem *)__va(pa);
-	memset(xml_mem, 0, size);
+	xml_mem = kzalloc(size, GFP_KERNEL);
+	if (!xml_mem) {
+		pr_err("%s: xml_mem kzalloc failed\n", __func__);
+		return -ENOMEM;
+	}
 
 	/* The XML coprocessor needs large blocks of contiguous physical
-	 * memory, to make sure we get it we need to preallocate it. */
+	 * memory, this is done in early boot, we collect it here. */
 	i = 0;
-	for_each_compatible_node(dn, NULL, XML_UNIT_COMPATIBLE)
-	{
-		/* Allocate memory for each XML coprocessor,
-		 *
-		 *	256M for transient bufflets (aligned to the size), plus
-		 *
-		 *	4 x 32M (20 + 12 padding) for VF0 Qcode table
-		 *		(32MB * aligned), plus
-		 *
-		 *	4 x 16M for VF0 fixed session state (16MB aligned)
-		 *		=> (16bit session id), plus
-		 *
-		 *	4 x 1M  for VF0 Imq (aligned to the size)
-		 *
-		 *	= 452 M on 256M boundary
-		 *
-		 *	The order has to be respected for alignment issues
-		 */
-
-		pa = memblock_alloc_base(452*1024*1024, 256*1024*1024, 0);
+	for_each_compatible_node(dn, NULL, XML_UNIT_COMPATIBLE)	{
+		pa = wsp_xmlx_early_allocs[i];
 		if (pa == 0) {
-			pr_err("xmlx: Failed allocating memory for %s\n",
+			pr_err("xmlx: Failed acquiring memory for %s\n",
 				dn->full_name);
 			continue;
 		}
 
 		xml_mem[i].addr = pa;
+		xml_mem[i].size = xmlx_early_size;
 		xml_mem[i].dn = of_node_get(dn);
-		pr_debug("xmlx: Allocated 452M for %s at %#llx\n",
-			dn->full_name, xml_mem[i].addr);
+		pr_debug("xmlx: acquired %ldM for %s at %#llx\n",
+			 xml_mem[i].size >> 20,
+			 dn->full_name, xml_mem[i].addr);
 		i++;
 	}
+
+	/* make sure we have at least one */
+	if (xml_mem[0].addr == 0)
+		return -ENODEV;
+
+	return 0;
 }
 
 u64 wsp_xml_get_mem_addr(struct device_node *dn)
@@ -135,11 +131,15 @@ struct copro_unit *wsp_xml_get_copro_device(int index)
 
 	dn = xml_mem[index].dn;
 
-	/***
-	   getting the copro_type info
-	   copro_type.c:: int __init copro_types_init(void)
-	*/
+	/*
+	 *  getting the copro_type info
+	 *  copro_type.c:: int __init copro_types_init(void)
+	 */
 	pdev = of_find_device_by_node(dn);
+	if (!pdev) {
+		pr_err("%s:of_find_device_by_node(%p) failed\n", __func__, dn);
+		return NULL;
+	}
 	copro = dev_get_drvdata(&pdev->dev);
 
 
@@ -257,6 +257,13 @@ static struct platform_driver xmlx_unit_driver = {
 
 int __init xmlx_unit_init(void)
 {
-	return platform_driver_register(&xmlx_unit_driver);
+	int rc;
+
+	rc = wsp_xml_memory_alloc();
+	if (rc)
+		return rc;
+
+	rc = platform_driver_register(&xmlx_unit_driver);
+	return rc;
 }
 __copro_unit(xmlx, xmlx_unit_init);

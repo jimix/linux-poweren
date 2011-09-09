@@ -9,5 +9,6 @@ obj-$(CONFIG_SMP)		+= smp.o scom_smp.o
 obj-$(CONFIG_PCI)		+= wsp_pci.o
 obj-$(CONFIG_PCI_MSI)		+= msi.o
 obj-$(CONFIG_PPC_WSP_HWTRACE)	+= hwtrace.o
+obj-$(CONFIG_PPC_WSP_UNIT_XMLX)	+= xmlx.o
 
 obj-$(CONFIG_PPC_WSP_COPRO)	+= copro/

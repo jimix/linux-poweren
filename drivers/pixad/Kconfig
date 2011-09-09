@@ -1,0 +1,16 @@
+#
+# PowerEN PiXAD DRIVER
+#
+
+config POWEREN_PIXAD
+	depends on PPC_WSP_UNIT_XMLX
+	tristate "Wire-Speed Processor XML PiXAD driver"
+	default m
+	select MMU_NOTIFIER
+	---help---
+	  Enable the WSP PiXAD(PowerEN Xml Accelerator Driver)
+	  driver for the XML coprocessor
+
+config POWEREN_PIXAD_DEBUG
+	bool "Wire-Speed Processor XML PiXAD driver Debugging"
+	depends on POWEREN_PIXAD
