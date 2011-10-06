@@ -251,50 +251,6 @@ void discard_lazy_cpu_state(void)
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
-void do_send_trap(struct pt_regs *regs, unsigned long address,
-		  unsigned long error_code, int signal_code, int breakpt)
-{
-	siginfo_t info;
-
-	if (notify_die(DIE_DABR_MATCH, "dabr_match", regs, error_code,
-			11, SIGSEGV) == NOTIFY_STOP)
-		return;
-
-	/* Deliver the signal to userspace */
-	info.si_signo = SIGTRAP;
-	info.si_errno = breakpt;	/* breakpoint or watchpoint id */
-	info.si_code = signal_code;
-	info.si_addr = (void __user *)address;
-	force_sig_info(SIGTRAP, &info, current);
-}
-#else	/* !CONFIG_PPC_ADV_DEBUG_REGS */
-void do_dabr(struct pt_regs *regs, unsigned long address,
-		    unsigned long error_code)
-{
-	siginfo_t info;
-
-	if (notify_die(DIE_DABR_MATCH, "dabr_match", regs, error_code,
-			11, SIGSEGV) == NOTIFY_STOP)
-		return;
-
-	if (debugger_dabr_match(regs))
-		return;
-
-	/* Clear the DABR */
-	set_dabr(0);
-
-	/* Deliver the signal to userspace */
-	info.si_signo = SIGTRAP;
-	info.si_errno = 0;
-	info.si_code = TRAP_HWBKPT;
-	info.si_addr = (void __user *)address;
-	force_sig_info(SIGTRAP, &info, current);
-}
-#endif	/* CONFIG_PPC_ADV_DEBUG_REGS */
-
-static DEFINE_PER_CPU(unsigned long, current_dabr);
-
-#ifdef CONFIG_PPC_ADV_DEBUG_REGS
 /*
  * Set the debug registers back to their default "safe" values.
  */
@@ -357,6 +313,44 @@ static void switch_booke_debug_regs(struct thread_struct *new_thread)
 			prime_debug_regs(new_thread);
 }
 #else	/* !CONFIG_PPC_ADV_DEBUG_REGS */
+static DEFINE_PER_CPU(unsigned long, current_dabr);
+
+int set_dabr(unsigned long dabr)
+{
+	__get_cpu_var(current_dabr) = dabr;
+
+	if (ppc_md.set_dabr)
+		return ppc_md.set_dabr(dabr);
+
+	/* XXX should we have a CPU_FTR_HAS_DABR ? */
+	mtspr(SPRN_DABR, dabr);
+
+	return 0;
+}
+
+void do_dabr(struct pt_regs *regs, unsigned long address,
+		    unsigned long error_code)
+{
+	siginfo_t info;
+
+	if (notify_die(DIE_DABR_MATCH, "dabr_match", regs, error_code,
+			11, SIGSEGV) == NOTIFY_STOP)
+		return;
+
+	if (debugger_dabr_match(regs))
+		return;
+
+	/* Clear the DABR */
+	set_dabr(0);
+
+	/* Deliver the signal to userspace */
+	info.si_signo = SIGTRAP;
+	info.si_errno = 0;
+	info.si_code = TRAP_HWBKPT;
+	info.si_addr = (void __user *)address;
+	force_sig_info(SIGTRAP, &info, current);
+}
+
 #ifndef CONFIG_HAVE_HW_BREAKPOINT
 static void set_debug_reg_defaults(struct thread_struct *thread)
 {
@@ -367,27 +361,6 @@ static void set_debug_reg_defaults(struct thread_struct *thread)
 }
 #endif /* !CONFIG_HAVE_HW_BREAKPOINT */
 #endif	/* CONFIG_PPC_ADV_DEBUG_REGS */
-
-int set_dabr(unsigned long dabr)
-{
-	__get_cpu_var(current_dabr) = dabr;
-
-	if (ppc_md.set_dabr)
-		return ppc_md.set_dabr(dabr);
-
-	/* XXX should we have a CPU_FTR_HAS_DABR ? */
-#ifdef CONFIG_PPC_ADV_DEBUG_REGS
-	mtspr(SPRN_DAC1, dabr);
-#ifdef CONFIG_PPC_47x
-	isync();
-#endif
-#elif defined(CONFIG_PPC_BOOK3S)
-	mtspr(SPRN_DABR, dabr);
-#endif
-
-
-	return 0;
-}
 
 #ifdef CONFIG_PPC64
 DEFINE_PER_CPU(struct cpu_usage, cpu_usage_array);
