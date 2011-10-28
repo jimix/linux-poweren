@@ -159,6 +159,14 @@ int __kprobes do_page_fault(struct pt_regs *regs, unsigned long address,
 	}
 #endif
 
+#ifdef CONFIG_PPC_BOOK3E
+	if (error_code & (ESR_DLK|ESR_ILK)) {
+		/* detect that this is a privileged op and SIGILL */
+		_exception(SIGILL, regs, ILL_PRVOPC, regs->nip);
+		return 0;
+	}
+#endif
+
 	if (notify_page_fault(regs))
 		return 0;
 
