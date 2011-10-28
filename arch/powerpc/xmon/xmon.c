@@ -738,8 +738,10 @@ static void insert_bpts(void)
 
 static void insert_cpu_bpts(void)
 {
+#ifndef CONFIG_PPC_ADV_DEBUG_REGS
 	if (dabr.enabled)
 		set_dabr(dabr.address | (dabr.enabled & 7));
+#endif
 	if (iabr && cpu_has_feature(CPU_FTR_IABR))
 		mtspr(SPRN_IABR, iabr->address
 			 | (iabr->enabled & (BP_IABR|BP_IABR_TE)));
@@ -767,7 +769,9 @@ static void remove_bpts(void)
 
 static void remove_cpu_bpts(void)
 {
+#ifndef CONFIG_PPC_ADV_DEBUG_REGS
 	set_dabr(0);
+#endif
 	if (cpu_has_feature(CPU_FTR_IABR))
 		mtspr(SPRN_IABR, 0);
 }

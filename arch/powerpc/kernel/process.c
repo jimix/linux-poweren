@@ -608,7 +608,7 @@ void show_regs(struct pt_regs * regs)
 	if ((regs->trap != 0xc00) && cpu_has_feature(CPU_FTR_CFAR))
 		printk("CFAR: "REG"\n", regs->orig_gpr3);
 	if (trap == 0x300 || trap == 0x600)
-#if defined(CONFIG_4xx) || defined(CONFIG_BOOKE)
+#if defined(CONFIG_4xx) || defined(CONFIG_BOOKE) || defined(CONFIG_PPC_BOOK3E)
 		printk("DEAR: "REG", ESR: "REG"\n", regs->dar, regs->dsisr);
 #else
 		printk("DAR: "REG", DSISR: %08lx\n", regs->dar, regs->dsisr);
