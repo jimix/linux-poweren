@@ -725,6 +725,17 @@ void start_cpu_decrementer(void)
 #endif /* defined(CONFIG_BOOKE) || defined(CONFIG_40x) */
 }
 
+void start_cpu_user_decrementer(void)
+{
+#if defined(CONFIG_PPC_A2)
+	u64 prev_val;
+
+	prev_val = mfspr(SPRN_TCR);
+	/* Enable user decrementer and enable user decrementer interrupts */
+	mtspr(SPRN_TCR, prev_val | TCR_UD | TCR_UDIE);
+#endif
+}
+
 void __init generic_calibrate_decr(void)
 {
 	ppc_tb_freq = DEFAULT_TB_FREQ;		/* hardcoded default */
@@ -970,6 +981,7 @@ void secondary_cpu_time_init(void)
 	 * such as BookE
 	 */
 	start_cpu_decrementer();
+	start_cpu_user_decrementer();
 
 	/* FIME: Should make unrelatred change to move snapshot_timebase
 	 * call here ! */
@@ -1035,6 +1047,7 @@ void __init time_init(void)
 	 * such as BookE
 	 */
 	start_cpu_decrementer();
+	start_cpu_user_decrementer();
 
 	/* Register the clocksource, if we're not running on iSeries */
 	if (!firmware_has_feature(FW_FEATURE_ISERIES))

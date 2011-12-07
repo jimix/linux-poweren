@@ -1,0 +1,187 @@
+config POWEREN_KHEA
+	tristate
+	prompt "WSP HEA-based Ethernet support"
+	depends on POWEREN_RHEA
+	select MDIO
+	select PHYLIB
+	select INET_LRO
+	default y
+	---help---
+	  This driver supports the IBM WSP HEA as a kernel ethernet adapter.
+
+	  To compile the driver as a module, choose M here. The module
+	  will be called phea.
+
+menuconfig POWEREN_KHEA_OPTIONS
+	bool "KHEA Setup options"
+	depends on POWEREN_KHEA
+	default y
+	---help---
+	  Say Y here to get to see options for configuring the WSP KHEA.
+	  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if POWEREN_KHEA_OPTIONS
+
+config KHEA_ENABLE
+	int "Configure which HEA lines are enabled"
+	depends on POWEREN_KHEA
+	default 4369
+	---help---
+	 This value specifies which HEA ports should be enabled.
+	 Each bit enables one port. The bit numbers should be in X86
+	 endianess and computed as: adapter*16 + pport*4 + lport.
+
+config KHEA_BASENAME
+       string "Configure the base name for HEA devices"
+       depends on POWEREN_KHEA
+       default "hea"
+       ---help---
+         This value specifies the base name of HEA kernel devices
+         (default is hea0, hea1, etc..)
+
+config KHEA_NUM_QP
+	int "Configure the number of queue pairs"
+	depends on POWEREN_KHEA
+	default 1
+	---help---
+	 This value specifies ...
+
+config KHEA_NAPI_WEIGHT
+	int "Configure default NAPI weight for HEA interfaces"
+	depends on POWEREN_KHEA
+	default 256
+	---help---
+	 This value specifies ...
+
+config KHEA_SENDQ_LEN
+	int "Configure the default length of sendq"
+	depends on POWEREN_KHEA
+	default 1024
+	---help---
+	 This value specifies the maximum number of packets received
+	 in a napi_poll run.
+
+config KHEA_SENDQ_RECLAIM
+	int "Configure the default reclaim interval for sendq"
+	depends on POWEREN_KHEA
+	default 32
+	---help---
+	 This value specifies how many send WQE enqueue before asking
+	 for a completion event.
+
+config KHEA_RECVQ_NUM
+	int "Configure the number of receive queue to use"
+	depends on POWEREN_KHEA
+	default 2
+	range 1 2
+	---help---
+	 This value specifies
+
+config KHEA_RECVQ1_LEN
+	int "Configure the default length of receive queue 1"
+	depends on POWEREN_KHEA
+	default 1024
+	---help---
+	 This value specifies
+
+config KHEA_RECVQ2_LEN
+	int "Configure the default length of receive queue 2"
+	depends on POWEREN_KHEA
+	default 1024
+	---help---
+	 This value specifies
+
+config KHEA_RECVQ1_LOW
+	int "Configure the queue refill threshold for queue 1"
+	depends on POWEREN_KHEA
+	default 512
+	---help---
+	 This value specifies
+
+config KHEA_RECVQ2_LOW
+	int "Configure the queue refill threshold for queue 2"
+	depends on POWEREN_KHEA
+	default 512
+	---help---
+	 This value specifies
+
+config KHEA_VLAN_ACCELERATION
+	bool "KHEA implements VLAN acceleration"
+	depends on POWEREN_KHEA
+	default n
+	---help---
+	 Say Y here to tell kHEA to use VLAN acceleration
+
+config KHEA_DO_GSO
+	int "KHEA implements GSO acceleration"
+	depends on POWEREN_KHEA
+	default 1
+	---help---
+	 Say Y here to tell kHEA to use GSO acceleration
+
+menuconfig POWEREN_KHEA_RECEIVE_OPTIONS
+	bool "See kHEA expert tuning options"
+	depends on POWEREN_KHEA
+	default y
+	---help---
+	 Say Y here to get to see receiver options for WSP KHEA.
+	 This option alone does not add any kernel code.
+	 If you say N, all options in this submenu will be skipped and disabled.
+
+if POWEREN_KHEA_RECEIVE_OPTIONS
+
+config KHEA_SEND_LL_LIMIT
+	int "Configure the limit to use low latency send (use 0 to disable)"
+	depends on POWEREN_KHEA
+	default 0
+	---help---
+	 This value specifies
+
+config KHEA_SEND_WQE_TYPE
+	int "Configure the send queue WQE type"
+	depends on POWEREN_KHEA
+	default 1
+	---help---
+	 This value specifies
+
+config KHEA_FRAG_ALLOC_ORDER
+	int "Configure the page alloc order for fragments"
+	depends on POWEREN_KHEA
+	default 4
+	---help---
+	 This value specifies the page alloc order for fragments
+
+config KHEA_RECVQ1_SIZE
+	int "Configure the default size for packets in queue 1"
+	depends on POWEREN_KHEA
+	default 128
+	---help---
+	 This value specifies the maximum size of packets received in RQ1
+
+config KHEA_RECVQ2_SIZE
+	int "Configure the default size for packets in queue 2"
+	depends on POWEREN_KHEA
+	default 2048
+	---help---
+	 This value specifies the maximum size of packets received in RQ2
+
+config KHEA_MAX_LRO
+	int "Configure the number of LRO sessions (0 to disable - BUGGY)"
+	depends on POWEREN_KHEA
+	default 0
+	---help---
+	 This value specifies the number of LRO reassembly sessions
+
+config KHEA_USE_LL_RQ1
+	int "Sets RC1 as low latency (use 0 to disable)"
+	depends on POWEREN_KHEA
+	default 0
+	---help---
+	 This value specifies if RC1 is low latency or not
+
+endif # POWEREN_KHEA_RECEIVE_OPTIONS
+
+endif # POWEREN_KHEA_OPTIONS
+

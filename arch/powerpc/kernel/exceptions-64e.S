@@ -209,6 +209,15 @@ exc_##n##_bad_stack:							    \
 	nop;	/* To make debug interrupts happy */			\
 	b	exc_##label##_book3e;
 
+#define UDEC_EXCEPTION_RFI(loc, label)					\
+	. = interrupt_base_book3e + loc;				\
+	nop; /* To make debug interrupts happy */			\
+	mtspr SPRN_SPRG_GEN_SCRATCH,r13;	/* free a GPR */	\
+	lis r13, TSR_UDIS@h;						\
+	mtspr SPRN_TSR, r13;	/* Clear UDEC Exception */ 		\
+	mfspr r13, SPRN_SPRG_GEN_SCRATCH; /* Restore GPR r13 */		\
+	rfi
+
 #define ACK_NONE(r)
 #define ACK_DEC(r)							\
 	lis	r,TSR_DIS@h;						\
@@ -278,10 +287,14 @@ interrupt_base_book3e:					/* fake trap */
 	EXCEPTION_STUB(0x260, perfmon)
 	EXCEPTION_STUB(0x280, doorbell)
 	EXCEPTION_STUB(0x2a0, doorbell_crit)
+
 	EXCEPTION_STUB(0x2c0, guest_doorbell)
 	EXCEPTION_STUB(0x2e0, guest_doorbell_crit)
 	EXCEPTION_STUB(0x300, hypercall)
 	EXCEPTION_STUB(0x320, ehpriv)
+#ifdef CONFIG_PPC_A2
+	UDEC_EXCEPTION_RFI(0x800, user_decrementer)
+#endif
 
 	.globl interrupt_end_book3e
 interrupt_end_book3e:

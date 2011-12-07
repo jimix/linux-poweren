@@ -1,0 +1,8 @@
+config POWEREN_MHEA
+	tristate
+	prompt "Driver module to map memory on HEA pbic."
+	depends on POWEREN_RHEA
+	default m
+	---help---
+	  This is a device driver for the PowerEN HEA which allows
+	  user space programs to map memory with the HEA pbic.

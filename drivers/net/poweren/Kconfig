@@ -1,0 +1,7 @@
+source "drivers/net/poweren/rhea/Kconfig"
+
+source "drivers/net/poweren/khea/Kconfig"
+
+source "drivers/net/poweren/dhea/Kconfig"
+
+source "drivers/net/poweren/mhea/Kconfig"

@@ -1,0 +1,36 @@
+config POWEREN_RHEA
+	tristate
+	prompt "PowerEN Raw HEA Low Level Driver"
+	depends on POWEREN_HEA
+	default y
+	---help---
+	  This is the platform device driver for the PowerEN HEA. All
+	  other device drives, which want to allocate a resource from
+	  the HEA have to use the rhea interface to get access to it.
+
+	  To compile the driver as a module, choose M here. The module
+	  will be called rhea.
+
+menuconfig POWEREN_RHEA_OPTIONS
+	bool "RHEA Setup options"
+	depends on POWEREN_RHEA
+	default y
+	---help---
+	  Say Y here to get to see options for configuring the WSP KHEA.
+	  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if POWEREN_RHEA_OPTIONS
+
+config POWEREN_RHEA_TIMER_MS
+	int "Configure how much time should be put between two timers"
+	depends on POWEREN_RHEA
+	default 900
+	---help---
+	  This values specifies the amount of time in ms
+	  between two different timer calls,
+	  which checks the link state of
+	  the 1G interface.
+
+endif # POWEREN_RHEA_OPTIONS

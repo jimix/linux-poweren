@@ -1,0 +1,11 @@
+config POWEREN_DHEA
+	tristate
+	prompt "PowerEN Direct HEA Interface Driver"
+	depends on POWEREN_RHEA
+	default m
+	---help---
+	This is a device driver for the PowerEN HEA which allows
+	user space programs to configure the PowerEN HEA.
+
+	To compile the driver as a module, choose M here. The module
+	will be called dhea.

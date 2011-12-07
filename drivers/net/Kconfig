@@ -3452,4 +3452,14 @@ config VMXNET3
 	  To compile this driver as a module, choose M here: the
 	  module will be called vmxnet3.
 
+config POWEREN_HEA
+	bool "PowerEN Host Ethernet Adapter (pHEA)"
+	depends on PPC_WSP && INET
+	default y
+	---help---
+	  This enables support for the Host Ethernet Adaptor that is
+	  intergrated in the PowerEN processor.
+
+source "drivers/net/poweren/Kconfig"
+
 endif # NETDEVICES

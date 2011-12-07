@@ -515,6 +515,11 @@
 #define TCR_FIE		0x00800000	/* FIT Interrupt Enable */
 #define TCR_ARE		0x00400000	/* Auto Reload Enable */
 
+#ifdef CONFIG_PPC_A2
+#define TCR_UD		0x00001000	/* User Decrementer Enable */
+#define TCR_UDIE	0x00200000	/* User Decrementer Interrupt Enable */
+#endif
+
 /* Bit definitions for the TSR. */
 #define TSR_ENW		0x80000000	/* Enable Next Watchdog */
 #define TSR_WIS		0x40000000	/* WDT Interrupt Status */
@@ -526,6 +531,8 @@
 #define TSR_PIS		0x08000000	/* PIT Interrupt Status */
 #define TSR_DIS		TSR_PIS		/* DEC Interrupt Status */
 #define TSR_FIS		0x04000000	/* FIT Interrupt Status */
+
+#define TSR_UDIS	0x02000000	/* UDEC Interrupt Status */
 
 /* Bit definitions for the DCCR. */
 #define DCCR_NOCACHE	0		/* Noncacheable */
