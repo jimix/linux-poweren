@@ -15,7 +15,21 @@ config POWEREN_EP_DEVICE
           The manager split the buffers in slots for multi-process and
           multi-thread usage
 
+config POWEREN_EP_HOST
+	tristate "PowerEN Processor Endpoint Host PCIe Driver"
+	depends on PCI
+	default n
+	help
+          This is the implementation of a PCI Express driver for
+          the PowerEN Processor Endpoint. It is intended to allow
+          drivers that needs PCIe resources to register against it
+          and ask for them. It also provides a component named
+          "slot manager", see description on POWEREN_EP_DEVICE.
+          It also has an iommu address space manager.
+          Enable this if building a kernel for a machine with the
+          endpoint plugged into its PCI bus.
+
 menuconfig POWEREN_EP_DEBUG
 	bool "POWEREN EP Extra Debug Output"
-	depends on POWEREN_EP_DEVICE
+	depends on POWEREN_EP_DEVICE || POWEREN_EP_HOST
 	default n
