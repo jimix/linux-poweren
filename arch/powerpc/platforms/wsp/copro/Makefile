@@ -6,6 +6,8 @@ ifeq ($(CONFIG_PPC_WSP_COPRO_GCOV),y)
 GCOV_PROFILE := y
 endif
 
+ccflags-$(CONFIG_PPC_WSP_UNIT_PCIEEP)	+= -Idrivers/poweren/pcie_endpoint
+
 obj-y					+= cop.o
 obj-y					+= pbic.o
 obj-y					+= pbic_tlb.o
@@ -21,6 +23,7 @@ obj-$(CONFIG_PPC_WSP_UNIT_CDMX)		+= unit_cdmx.o
 obj-$(CONFIG_PPC_WSP_UNIT_CMPX)		+= unit_cmpx.o
 obj-$(CONFIG_PPC_WSP_UNIT_REGX)		+= unit_regx.o
 obj-$(CONFIG_PPC_WSP_UNIT_XMLX)		+= unit_xmlx.o
+obj-$(CONFIG_PPC_WSP_UNIT_PCIEEP)	+= unit_pcieep.o
 obj-y					+= unit_fini.o  # must be last unit
 
 obj-$(CONFIG_PPC_WSP_COPRO_DEBUGFS)	+= pbic_debug.o

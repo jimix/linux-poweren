@@ -1,0 +1,2 @@
+
+source "drivers/poweren/pcie_endpoint/Kconfig"

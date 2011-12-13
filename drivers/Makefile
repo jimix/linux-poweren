@@ -129,3 +129,5 @@ obj-$(CONFIG_IOMMU_SUPPORT)	+= iommu/
 obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
 
 obj-$(CONFIG_POWEREN_PIXAD)	+= pixad/
+
+obj-y               += poweren/

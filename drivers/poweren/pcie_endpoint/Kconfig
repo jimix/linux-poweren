@@ -1,0 +1,21 @@
+#
+# PowerEN Processor PCI Express Endpoint Device Driver
+#
+
+config POWEREN_EP_DEVICE
+	bool "PowerEN Processor Endpoint Platform Driver"
+	default n
+	help
+          This is the implementation of a platform driver for
+          the PowerEN Processor Endpoint. It is intended to allow
+          drivers that needs PCIe resources to register against it
+          and ask for them. It also provides a component named
+          "slot manager" that allocates and configures two 1MB buffers
+          per function for inbound and outbound mmio transfers.
+          The manager split the buffers in slots for multi-process and
+          multi-thread usage
+
+menuconfig POWEREN_EP_DEBUG
+	bool "POWEREN EP Extra Debug Output"
+	depends on POWEREN_EP_DEVICE
+	default n

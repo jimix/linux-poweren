@@ -38,4 +38,9 @@ config PPC_WSP_UNIT_XMLX
 	bool "XML Accelerator Unit"
 	default y
 
+config PPC_WSP_UNIT_PCIEEP
+	bool "PCIe Endpoint Unit"
+	depends on POWEREN_EP_DEVICE
+	default y
+
 endmenu

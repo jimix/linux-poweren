@@ -132,4 +132,8 @@ source "drivers/virt/Kconfig"
 
 source "drivers/pixad/Kconfig"
 
+source "drivers/poweren/Kconfig"
+
+
+
 endmenu
