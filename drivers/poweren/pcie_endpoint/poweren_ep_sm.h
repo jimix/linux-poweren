@@ -40,13 +40,6 @@
 #define VETH_SLOT				(MAX_SLOTS - 1)
 #define RES_SLOT_VETH				0xFFFE
 
-/* hirs used by the slotmgr */
-#define SLOTMGR_CTRL_HIR			5 /* read, write */
-#define SLOTMGR_PROTOCOL_HIR			6 /* write host, read device */
-#define SLOTMGR_HPID_HIR			7 /* write host, read device */
-#define SLOTMGR_DPID_HIR			8 /* read host, write device */
-#define SLOTMGR_SLOT_HIR			9 /* read host, write device */
-
 /* values for the ctrl hir */
 #define NO_SLOT_REQ				0
 #define SLOT_REQ				1
@@ -111,6 +104,7 @@ extern void *poweren_ep_get_slot_remote_sma(struct poweren_ep_vf *vf, u32 slot);
 extern int poweren_ep_find_slot_from_addr(struct poweren_ep_vf *vf, u64 addr);
 extern int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		u32 protocol, u32 flags, unsigned long *slot_size);
+extern void poweren_ep_slotmgr_connect_cleanup(struct poweren_ep_vf *vf);
 extern int poweren_ep_slotmgr_find_slot(struct poweren_ep_vf *vf,
 		u32 protocol, unsigned long *slot_size);
 extern void poweren_ep_slotmgr_term(struct poweren_ep_vf *vf,

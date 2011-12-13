@@ -192,6 +192,12 @@ static int poweren_ep_iommu_init(struct pci_dev *pdev)
 
 	fn = PCI_FUNC(pdev->devfn);
 
+	if (!iommu_found()) {
+		poweren_ep_error("iommu is not present!");
+		err = -ENOMEM;
+		goto iommu_not_present;
+	}
+
 	ep_dev[fn].mem_map = poweren_ep_domain_mem_map_alloc();
 	if (!ep_dev[fn].mem_map) {
 		poweren_ep_error("domain map not allocated correctly\n");
@@ -224,6 +230,7 @@ attach_failed:
 dom_alloc_failed:
 	poweren_ep_domain_mem_map_free(ep_dev[fn].mem_map);
 map_alloc_failed:
+iommu_not_present:
 	return err;
 }
 
@@ -394,8 +401,7 @@ static int poweren_ep_init(void)
 	poweren_ep_info("registered PowerEN pci endpoint\n");
 
 	if (count != TOTAL_FUNCS) {
-		poweren_ep_error("unexpected number of functions."
-				" found %u of %u\n", count, TOTAL_FUNCS);
+		poweren_ep_error("%u probe failed\n", TOTAL_FUNCS - count);
 		pci_unregister_driver(&poweren_ep_driver);
 		return -ENODEV;
 	}

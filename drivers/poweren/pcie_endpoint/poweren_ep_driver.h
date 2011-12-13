@@ -33,6 +33,13 @@
 /* Hardware defines */
 #define	DEVICE_INIT_HIR		0
 #define	HOST_INIT_HIR		1
+#define MR_HOST_GEN_HIR		2
+#define MR_A2_GEN_HIR		3
+#define SLOTMGR_CTRL_HIR	5 /* read, write */
+#define SLOTMGR_PROTOCOL_HIR	6 /* write host, read device */
+#define SLOTMGR_HPID_HIR	7 /* write host, read device */
+#define SLOTMGR_DPID_HIR	8 /* read host, write device */
+#define SLOTMGR_SLOT_HIR	9 /* read host, write device */
 #define RW_HIRS			8
 #define WO_HIRS			8
 #define MAX_HIRS		(RW_HIRS + WO_HIRS)

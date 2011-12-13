@@ -24,6 +24,8 @@
 #define AS_BIT_INMAP            0x1000000
 #define PID_INMAP_MASK          0x3FFF
 
+#define HPID_IN_NEGOTIATION		-810
+
 static struct poweren_ep_slotmgr **g_slotmgrs;
 
 static int poweren_ep_slotmgr_reserve_local_slot(
@@ -38,6 +40,8 @@ static int poweren_ep_slotmgr_reserve_local_slot(
 			(MAX_SLOTS - RESERVED_SLOTS);
 		slot = &slotmgr->slots[slotmgr->slot_id];
 		if (slot->protocol == 0) {
+			/* immediately set valid dpid and invalid hpid */
+			slot->hpid = HPID_IN_NEGOTIATION;
 			slot->dpid = current->pid;
 			slot->protocol = protocol;
 			/* The mmio buffers are ioremapped so they are cached */
@@ -87,7 +91,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		err = LOCK_INT(slotmgr);
 		if (err) {
 			poweren_ep_error("lock not acquired\n");
-			return err;
+			return -EAGAIN;
 		}
 
 		slot_id = VETH_SLOT;
@@ -124,7 +128,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		err = LOCK_INT(slotmgr);
 		if (err) {
 			poweren_ep_error("lock not acquired\n");
-			return err;
+			return -ENODEV;
 		}
 
 		/* check if the host is looking for an app like me*/
@@ -151,6 +155,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 			UNLOCK(slotmgr);
 			return DEVICE_NO_FREE_SLOTS;
 		}
+
 		/* we have a free slot and a waiting host, setup the slot
 		 * details and pass the informaion to the host */
 
@@ -174,11 +179,11 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		slotmgr->slots[slot_id].local_mmio_req = 0;
 		slotmgr->slots[slot_id].remote_mmio_req = 0;
 
-
 		/* push the slot id to the host*/
 		poweren_ep_write_hir(SLOTMGR_DPID_HIR, my_dpid);
 		poweren_ep_write_hir(SLOTMGR_SLOT_HIR, slot_id);
 		poweren_ep_write_hir(SLOTMGR_CTRL_HIR, SLOT_ALLOC);
+
 		UNLOCK(slotmgr);
 	}
 
@@ -186,7 +191,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 	err = LOCK_INT(slotmgr);
 	if (err) {
 		poweren_ep_error("lock not acquired\n");
-		return err;
+		return -EAGAIN;
 	}
 	if (poweren_ep_read_hir(SLOTMGR_CTRL_HIR) == SLOT_ALLOC_ACK) {
 
@@ -206,7 +211,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		/* set the slot size to be returned */
 		*slot_size = slotmgr->slots[slot_id].size;
 
-		poweren_ep_info("slot %d, protocol %d, offset %lu,"
+		poweren_ep_debug("slot %d, protocol %d, offset %lu,"
 				" size %lu pid %d ", slot_id,
 				slotmgr->slots[slot_id].protocol,
 				slotmgr->slots[slot_id].offset,
@@ -237,6 +242,39 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 }
 EXPORT_SYMBOL_GPL(poweren_ep_slotmgr_connect);
 
+void poweren_ep_slotmgr_connect_cleanup(struct poweren_ep_vf *vf)
+{
+	int err, i;
+	struct poweren_ep_slotmgr *slotmgr;
+
+	slotmgr = g_slotmgrs[vf->vf_num];
+
+	err = LOCK_INT(slotmgr);
+
+	if (err) {
+		poweren_ep_error("lock not acquired\n");
+		return;
+	}
+
+	for (i = 0; i < MAX_SLOTS; i++) {
+		if (slotmgr->slots[i].dpid == current->pid) {
+			if(slotmgr->slots[i].hpid == HPID_IN_NEGOTIATION) {
+				/* mid-negotiation - reset the hirs */
+				poweren_ep_write_hir(SLOTMGR_PROTOCOL_HIR, 0);
+				poweren_ep_write_hir(SLOTMGR_CTRL_HIR, NO_SLOT_REQ);
+			}
+
+			/*release the slot*/
+			poweren_ep_slotmgr_release_local_slot(slotmgr, i);
+
+			break;
+		}
+	}
+
+	UNLOCK(slotmgr);
+}
+EXPORT_SYMBOL_GPL(poweren_ep_slotmgr_connect_cleanup);
+
 int poweren_ep_slotmgr_find_slot(struct poweren_ep_vf *vf,
 		u32 protocol, unsigned long *slot_size)
 {
@@ -261,7 +299,7 @@ int poweren_ep_slotmgr_find_slot(struct poweren_ep_vf *vf,
 				(slotmgr->slots[i].protocol == protocol) &&
 				(slotmgr->slots[i].local_mmio_req == 1)) {
 			*slot_size = slotmgr->slots[i].size;
-			poweren_ep_info("FOUND slot %d, protocol %d,"
+			poweren_ep_info("slot %d, protocol %d,"
 					" offset %lu, size %lu pid %d ", i,
 					slotmgr->slots[i].protocol,
 					slotmgr->slots[i].offset,
@@ -408,7 +446,7 @@ void poweren_ep_remote_mmio_free(void)
 	for (i = 0; i < TOTAL_FUNCS; i++) {
 		slotmgr = g_slotmgrs[i];
 
-		if (slotmgr->local_mmio->virt_addr)
+		if (slotmgr->remote_mmio->virt_addr)
 			iounmap(slotmgr->remote_mmio->virt_addr);
 	}
 }

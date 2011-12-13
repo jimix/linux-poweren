@@ -177,7 +177,7 @@ int poweren_ep_slotmgr_mmap(struct poweren_ep_vf *vf, struct file *f,
 	} else
 		return -EINVAL;
 
-	poweren_ep_info("poweren_ep_slotmgr_mmap:"
+	poweren_ep_debug("poweren_ep_slotmgr_mmap:"
 			" vma->vm_start %lx, address %lx, size %lx",
 			vma->vm_start, address, vma->vm_end - vma->vm_start);
 
@@ -206,7 +206,7 @@ void poweren_ep_slotmgr_term(struct poweren_ep_vf *vf, u32 slot_id)
 	int ret;
 	struct poweren_ep_slotmgr *slotmgr = slotmgrs[vf->vf_num];
 
-	poweren_ep_info("release slot %d on vf %d", slot_id, vf->vf_num);
+	poweren_ep_debug("release slot %d on vf %d", slot_id, vf->vf_num);
 
 	ret = LOCK_INT(slotmgr);
 	if (ret) {

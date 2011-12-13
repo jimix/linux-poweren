@@ -61,7 +61,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		err = LOCK_INT(slotmgr);
 		if (err) {
 			poweren_ep_error("lock not acquired\n");
-			return err;
+			return -EAGAIN;
 		}
 
 		slotmgr_status = poweren_ep_read_hir(SLOTMGR_CTRL_HIR);
@@ -91,7 +91,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		err = LOCK_INT(slotmgr);
 		if (err) {
 			poweren_ep_error("lock not acquired\n");
-			return err;
+			return -ENODEV;
 		}
 
 		/* if there is a slot request in progress not started by me */
@@ -112,7 +112,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		err = LOCK_INT(slotmgr);
 		if (err) {
 			poweren_ep_error("lock not acquired\n");
-			return err;
+			return -EAGAIN;
 		}
 
 		if (poweren_ep_read_hir(SLOTMGR_CTRL_HIR) != SLOT_REQ) {
@@ -134,7 +134,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 	err = LOCK_INT(slotmgr);
 	if (err) {
 		poweren_ep_error("lock not acquired\n");
-		return err;
+		return -EAGAIN;
 	}
 	/* Check for any pending slots from the device */
 	if (poweren_ep_read_hir(SLOTMGR_CTRL_HIR) == SLOT_ALLOC) {
@@ -158,7 +158,7 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 		slotmgr->slots[slot_id].remote_mmio_req = 0;
 		slotmgr->slots[slot_id].hpid = mypid;
 
-		poweren_ep_info("slot %d, protocol %d, offset %lu,"
+		poweren_ep_debug("slot %d, protocol %d, offset %lu,"
 				" size %lu pid %d ", slot_id,
 				slotmgr->slots[slot_id].protocol,
 				slotmgr->slots[slot_id].offset,
@@ -172,6 +172,11 @@ int poweren_ep_slotmgr_connect(struct poweren_ep_vf *vf,
 
 }
 EXPORT_SYMBOL_GPL(poweren_ep_slotmgr_connect);
+
+void poweren_ep_slotmgr_connect_cleanup(struct poweren_ep_vf *vf)
+{
+}
+EXPORT_SYMBOL_GPL(poweren_ep_slotmgr_connect_cleanup);
 
 int poweren_ep_slotmgr_find_slot(struct poweren_ep_vf *vf,
 		u32 protocol,  unsigned long *slot_size)
@@ -242,10 +247,10 @@ int poweren_ep_local_mmio_setup(void)
 		slotmgr->local_mmio->phys_addr = MMIO_START +
 			(i * MMIO_MAX_SIZE);
 
-		ret = iommu_map(slotmgr->ep_dev->iommu_dom,
+		ret = iommu_map_range(slotmgr->ep_dev->iommu_dom,
 				slotmgr->local_mmio->phys_addr,
 				virt_to_phys(slotmgr->local_mmio->virt_addr),
-				order, IOMMU_READ | IOMMU_WRITE);
+				MMIO_SIZE, IOMMU_READ | IOMMU_WRITE);
 
 		if (ret) {
 			poweren_ep_error("failed to iommu map\n");
@@ -264,9 +269,9 @@ int poweren_ep_local_mmio_setup(void)
 local_mmio_setup_failed:
 	for (i = i - 1; i >= 0; i--) {
 		slotmgr = g_slotmgrs[i];
-		iommu_unmap(slotmgr->ep_dev->iommu_dom,
+		iommu_unmap_range(slotmgr->ep_dev->iommu_dom,
 				slotmgr->local_mmio->phys_addr,
-				order);
+				MMIO_SIZE);
 		free_pages((u64) slotmgr->local_mmio->virt_addr,
 				order);
 	}
@@ -352,9 +357,9 @@ void poweren_ep_local_mmio_free(void)
 		slotmgr = g_slotmgrs[i];
 
 		if (slotmgr->local_mmio->virt_addr) {
-			iommu_unmap(slotmgr->ep_dev->iommu_dom,
+			iommu_unmap_range(slotmgr->ep_dev->iommu_dom,
 					slotmgr->local_mmio->phys_addr,
-					get_order(slotmgr->local_mmio->size));
+					slotmgr->local_mmio->size);
 
 			__free_pages(slotmgr->local_mmio->virt_addr,
 					get_order(slotmgr->local_mmio->size));
@@ -370,7 +375,7 @@ void poweren_ep_remote_mmio_free(void)
 	for (i = 0; i < TOTAL_FUNCS; i++) {
 		slotmgr = g_slotmgrs[i];
 
-		if (slotmgr->local_mmio->virt_addr) {
+		if (slotmgr->remote_mmio->virt_addr) {
 			mtrr_del(slotmgr->mtrr_reg,
 					slotmgr->remote_mmio->phys_addr,
 					MMIO_SIZE);

@@ -29,6 +29,28 @@ config POWEREN_EP_HOST
           Enable this if building a kernel for a machine with the
           endpoint plugged into its PCI bus.
 
+config POWEREN_EP_HP_DEVICE
+	tristate "Device PowerEN Processor Endpoint High Performance Driver"
+	depends on POWEREN_EP_DEVICE
+	default n
+	help
+          This is the implementation of a char device that enables
+          host and device to exchange data using MMIO and DMA
+          transfers. It also has a memory registration component
+          that allow to reserve DMA windows for multi-process and
+          multi-thread usage. Enable this if building a kernel for
+          the device.
+
+config POWEREN_EP_HP_HOST
+	tristate "Host PowerEN Processor Endpoint High Performance Driver"
+	depends on POWEREN_EP_HOST
+	default n
+	help
+          See description on POWEREN_EP_HP_DEVICE. It also allows user
+          applications to map memory buffers allocated in userspace
+          against the host iommu. Enable this if building
+          a kernel for the host.
+
 menuconfig POWEREN_EP_DEBUG
 	bool "POWEREN EP Extra Debug Output"
 	depends on POWEREN_EP_DEVICE || POWEREN_EP_HOST

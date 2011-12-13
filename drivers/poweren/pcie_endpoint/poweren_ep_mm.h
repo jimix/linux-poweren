@@ -25,7 +25,7 @@
 
 #include "poweren_ep_vf.h"
 
-#define LARGE_SLAB_NUM	248ull
+#define LARGE_SLAB_NUM	100ull
 #define SMALL_SLAB_NUM	1024ull
 #define TINY_SLAB_NUM	512ull
 
