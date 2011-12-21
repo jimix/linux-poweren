@@ -5,6 +5,7 @@
 
 /* Devtree compatible strings for major devices */
 #define PCIE_COMPATIBLE     "ibm,wsp-pciex"
+#define NHTM_COMPATIBLE     "ibm,wsp-nhtm"
 
 extern void wsp_setup_arch(void);
 extern void wsp_setup_irq(void);

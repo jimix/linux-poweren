@@ -18,6 +18,7 @@ header-y += nvram.h
 header-y += param.h
 header-y += poll.h
 header-y += posix_types.h
+header-y += poweren_hwtrace.h
 header-y += ps3fb.h
 header-y += resource.h
 header-y += seccomp.h

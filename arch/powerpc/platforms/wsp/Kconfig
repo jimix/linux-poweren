@@ -12,6 +12,20 @@ config PPC_WSP
 	select PPC_WSP_COPRO
 	default n
 
+config PPC_WSP_HWTRACE
+	depends on PPC_WSP
+	tristate "PowerEN Hardware Trace Macro support"
+	default n
+	---help---
+	  The PowerEN processor provides a mechanism called Marker
+	  Trace to trace a sequence of events that may occur in
+	  different functional units. By examining such as a trace, it
+	  is possible to monitor complex interactions between
+	  different functional units and diagnose performance
+	  problems.
+
+	  When in doubt choose n.
+
 menu "WSP platform selection"
 	depends on PPC_BOOK3E_64
 
