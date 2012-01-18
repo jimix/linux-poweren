@@ -1,0 +1,8 @@
+config POWEREN_VIRTIO_VETH
+	default m
+	tristate "PowerEN Virtual Ethernet driver"
+	depends on VIRTIO_NET && (POWEREN_EP_DEVICE || POWEREN_EP_HOST)
+	---help---
+	  A virtio-based virtual network driver, used to facilitate
+	  cross-PCIe communication between the host machine and the OS
+	  running on an IBM PowerEN card.

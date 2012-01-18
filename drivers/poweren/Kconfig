@@ -1,2 +1,4 @@
 
 source "drivers/poweren/pcie_endpoint/Kconfig"
+
+source "drivers/poweren/veth/Kconfig"
