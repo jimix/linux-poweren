@@ -73,6 +73,12 @@ config HVC_UDBG
        select HVC_DRIVER
        default n
 
+config HVC_PCIE_VC
+       bool "Console using MBX PCIe interface"
+       depends on PPC_CHROMA
+       select HVC_DRIVER
+       default n
+
 config HVC_DCC
        bool "ARM JTAG DCC console"
        depends on ARM

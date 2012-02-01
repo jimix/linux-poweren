@@ -23,11 +23,47 @@
 #include "ics.h"
 #include "wsp.h"
 
+static char *cmd_buffer[1024];
+static struct mbx_service_context mbx_service_ctx;
+static void chroma_pcie_cmd(uint16_t flags, char *data, uint32_t len)
+{
+	int rc;
+	union poweren_cmd_packet_header *cmd_pkt = (void *) data;
+	switch (cmd_pkt->cmd) {
+	case POWEREN_PING:
+		cmd_pkt->args[0] = 3;
+		rc = mbx_write_packet(MBX_SERVICE_CMD, 0, data, len);
+		break;
+	case POWEREN_EVAL:
+		if (memcmp("reboot",
+			   (char *) cmd_pkt->args, cmd_pkt->data_size) == 0) {
+/* FIXME Fill in Reboot code */
+			cmd_pkt->args[0] = 0;
+			mbx_write_packet(MBX_SERVICE_CMD, 0, data, len);
+		} else if (memcmp("halt",
+				  (char *) cmd_pkt->args,
+				  cmd_pkt->data_size) == 0) {
+/* FIXME Fill in Halt code */
+			cmd_pkt->args[0] = 0;
+			mbx_write_packet(MBX_SERVICE_CMD, 0, data, len);
+		} else {
+			cmd_pkt->args[0] = -1;
+			mbx_write_packet(MBX_SERVICE_CMD, 0, data, len);
+		}
+		break;
+	default:
+		cmd_pkt->args[0] = -1;
+		mbx_write_packet(MBX_SERVICE_CMD, 0, data, len);
+	}
+}
+
 void __init chroma_setup_arch(void)
 {
 	wsp_setup_arch();
 	wsp_setup_h8();
-
+	mbx_install_service(MBX_SERVICE_CMD, chroma_pcie_cmd,
+			    &cmd_buffer[0], sizeof(cmd_buffer),
+			    &mbx_service_ctx);
 }
 
 static int __init chroma_probe(void)

@@ -1077,6 +1077,22 @@ a2_tlbinit_after_iprot_flush:
 	tlbwe
 #endif /* CONFIG_PPC_EARLY_DEBUG_WSP */
 
+#ifdef CONFIG_HVC_PCIE_VC
+	/* Serial console over PCI Express */
+	/* Restore the MAS0 we used for linear mapping load */
+	mtspr	SPRN_MAS0,r11
+
+	lis	r3,(MAS1_VALID | MAS1_IPROT)@h
+	ori	r3,r3,(MAS1_TSIZE(BOOK3E_PAGESZ_64K))@l
+	mtspr	SPRN_MAS1,r3
+	LOAD_REG_IMMEDIATE(r3, POWEREN_PCIE_MBX_VIRT | MAS2_I | MAS2_G)
+	mtspr	SPRN_MAS2,r3
+	LOAD_REG_IMMEDIATE(r3, POWEREN_PCIE_MBX_PHYS | MAS3_SR | MAS3_SW)
+	mtspr	SPRN_MAS7_MAS3,r3
+	/* re-use the MAS8 value from the linear mapping */
+	tlbwe
+#endif /* CONFIG_POWEREN_PCIE_VC */
+
 	PPC_TLBILX(0,0,0)
 	sync
 	isync

@@ -119,6 +119,12 @@
 #define WSP_UART_VIRT	0xf000000000001000
 #endif
 
+#ifdef CONFIG_HVC_PCIE_VC
+/* Virtual Console over PCI Express */
+#define POWEREN_PCIE_MBX_VIRT ASM_CONST(0xF000000000020000)
+#define POWEREN_PCIE_MBX_PHYS ASM_CONST(0x004000000000)
+#endif /* Same issue exists as WSP_UART_PHYS above */
+
 /* A2 erativax attributes definitions */
 #define ERATIVAX_RS_IS_ALL		0x000
 #define ERATIVAX_RS_IS_TID		0x040

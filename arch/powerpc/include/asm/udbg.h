@@ -37,6 +37,9 @@ struct device_node;
 extern void udbg_scc_init(int force_scc);
 extern int udbg_adb_init(int force_btext);
 extern void udbg_adb_init_early(void);
+extern void mbx_putc(char c);
+extern int mbx_getc_poll(void);
+extern int mbx_getc(void);
 
 extern void __init udbg_early_init(void);
 extern void __init udbg_init_debug_lpar(void);
@@ -54,6 +57,7 @@ extern void __init udbg_init_40x_realmode(void);
 extern void __init udbg_init_cpm(void);
 extern void __init udbg_init_usbgecko(void);
 extern void __init udbg_init_wsp(void);
+extern void __init udbg_init_poweren_pcie_vc(void);
 
 #endif /* __KERNEL__ */
 #endif /* _ASM_POWERPC_UDBG_H */

@@ -311,6 +311,9 @@ static void udbg_wsp_flush(void)
 
 static void udbg_wsp_putc(char c)
 {
+#ifdef CONFIG_HVC_PCIE_VC
+	mbx_putc(c);
+#endif
 	if (udbg_comport) {
 		if (c == '\n')
 			udbg_wsp_putc('\r');
@@ -321,6 +324,9 @@ static void udbg_wsp_putc(char c)
 
 static int udbg_wsp_getc(void)
 {
+#ifdef CONFIG_HVC_PCIE_VC
+	return mbx_getc();
+#endif
 	if (udbg_comport) {
 		while ((readb(&udbg_comport->lsr) & LSR_DR) == 0)
 			; /* wait for char */
@@ -331,6 +337,9 @@ static int udbg_wsp_getc(void)
 
 static int udbg_wsp_getc_poll(void)
 {
+#ifdef CONFIG_HVC_PCIE_VC
+	return mbx_getc_poll();
+#endif
 	if (udbg_comport)
 		if (readb(&udbg_comport->lsr) & LSR_DR)
 			return readb(&udbg_comport->rbr);
@@ -341,6 +350,9 @@ void __init udbg_init_wsp(void)
 {
 	udbg_comport = (struct NS16550 __iomem *)WSP_UART_VIRT;
 
+#ifdef CONFIG_HVC_PCIE_VC
+	udbg_init_poweren_pcie_vc();
+#endif
 	udbg_init_uart(udbg_comport, 57600, 50000000);
 
 	udbg_putc = udbg_wsp_putc;
